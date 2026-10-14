@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "收货地址管理",
+  "navigationBarBackgroundColor": "#667eea",
+  "navigationBarTextStyle": "white",
+  "backgroundColor": "#f5f7fa",
+  "enablePullDownRefresh": true
+}

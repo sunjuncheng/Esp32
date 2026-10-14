@@ -1,0 +1,102 @@
+<!-- 用户中心 -->
+<view class="hero">
+  <block wx:if="{{user}}">
+    <view class="user-row">
+      <view class="avt">{{ userAvatarChar }}</view>
+      <view class="u-info">
+        <view class="u-name">{{user.name}} <text class="uid">UID {{user.id}}</text></view>
+        <view class="u-phone" bindtap="copyPhone">📱 {{user.phone}} <text class="tip">（点复制）</text></view>
+      </view>
+      <view class="u-logout" bindtap="goLogout">退出</view>
+    </view>
+  </block>
+  <block wx:else>
+    <view class="user-row">
+      <view class="avt empty-avt">?</view>
+      <view class="u-info" style="flex:1;" bindtap="goLogin">
+        <view class="u-name" style="font-size:32rpx;">您还未登录</view>
+        <view class="u-phone">👉 点击这里登录/注册</view>
+      </view>
+    </view>
+  </block>
+
+  <!-- 余额卡片 -->
+  <view class="balance-card">
+    <view class="bc-left">
+      <view class="bc-lbl">账户余额</view>
+      <view class="bc-num">¥ {{balanceText}}</view>
+      <view class="bc-tip">{{user ? '实时同步网站账户余额' : '登录后查看余额'}}</view>
+    </view>
+    <view class="btn btn-green" bindtap="goRecharge" style="padding:18rpx 30rpx;border-radius:40rpx;font-size:26rpx;">
+      💰 充值
+    </view>
+  </view>
+</view>
+
+<view class="container" style="margin-top:-40rpx;">
+  <!-- 订单统计 -->
+  <view class="card">
+    <view class="card-title">
+      🧾 我的订单
+      <text class="more" bindtap="goOrders" data-t="-1">全部订单 →</text>
+    </view>
+    <view class="stat-grid">
+      <view class="stat" bindtap="goOrders" data-t="0">
+        <view class="num">{{orderCount[0]||0}}</view>
+        <view class="txt">📦 待发货</view>
+      </view>
+      <view class="stat" bindtap="goOrders" data-t="1">
+        <view class="num">{{orderCount[1]||0}}</view>
+        <view class="txt">🚚 待收货</view>
+      </view>
+      <view class="stat" bindtap="goOrders" data-t="2">
+        <view class="num">{{orderCount[2]||0}}</view>
+        <view class="txt">🎉 已完成</view>
+      </view>
+      <view class="stat" bindtap="goOrders" data-t="3">
+        <view class="num">{{orderCount[3]||0}}</view>
+        <view class="txt">📋 全部</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 工具菜单 -->
+  <view class="card">
+    <view class="card-title">🛠️ 功能</view>
+    <view class="menu-item">
+      <view class="m-ic">🛍️</view><view class="m-txt">去商城选购</view><view class="m-arr" bindtap="goBack">→</view>
+    </view>
+    <view class="menu-item" bindtap="copyPhone" wx:if="{{user}}">
+      <view class="m-ic">📋</view><view class="m-txt">复制我的手机号</view><view class="m-arr">→</view>
+    </view>
+    <view class="menu-item" bindtap="goRecharge">
+      <view class="m-ic">💳</view><view class="m-txt">充值教程</view><view class="m-arr">→</view>
+    </view>
+    <view class="menu-item" wx:if="{{user}}" bindtap="goAddress">
+      <view class="m-ic">📍</view>
+      <view class="m-txt" style="flex:1;">
+        <view style="font-weight:500;color:#0f172a;">收货地址管理</view>
+        <view style="font-size:22rpx;color:#64748b;margin-top:6rpx;line-height:1.45;">
+          {{defaultAddrText || '还没有地址，点这里管理 →'}}
+        </view>
+      </view>
+      <view class="m-arr">→</view>
+    </view>
+    <view class="menu-item" wx:if="{{user}}" bindtap="goDevice">
+      <view class="m-ic">🌡️</view>
+      <view class="m-txt" style="flex:1;">
+        <view style="font-weight:500;color:#0f172a;">我的设备</view>
+        <view style="font-size:22rpx;color:#64748b;margin-top:6rpx;line-height:1.45;">
+          ESP32 温湿度监控 · 查看实时数据与报警记录
+        </view>
+      </view>
+      <view class="m-arr">→</view>
+    </view>
+  </view>
+
+  <view class="about">
+    <view class="c-gray" style="font-size:22rpx;text-align:center;padding:30rpx 0;">
+      Zaslon 商城 · 小程序端 v1.0
+    </view>
+  </view>
+</view>

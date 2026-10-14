@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API调用演示 - 用户&订单管理</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:#f0f2f5;color:#333;padding:30px 16px;min-height:100vh;}
+        .wrap{max-width:1200px;margin:0 auto;}
+        .top-card{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;border-radius:16px;padding:26px 30px;margin-bottom:20px;box-shadow:0 8px 24px rgba(102,126,234,0.3);}
+        .top-card h1{font-size:24px;font-weight:700;margin-bottom:6px;}
+        .top-card p{font-size:13px;opacity:0.92;}
+        .config-bar{margin-top:16px;background:rgba(255,255,255,0.12);border-radius:10px;padding:14px 16px;backdrop-filter:blur(6px);}
+        .config-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+        .config-row label{font-size:13px;font-weight:600;white-space:nowrap;}
+        .config-row input{flex:1;min-width:300px;padding:8px 12px;border:none;border-radius:7px;font-size:13px;outline:none;background:rgba(255,255,255,0.95);color:#333;}
+        .config-row .btn{padding:8px 14px;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;}
+        .btn-test{background:#ffd43b;color:#2b2b2b;}
+        .btn-test:hover{background:#fcc419;transform:translateY(-1px);}
+        .btn-save{background:#fff;color:#667eea;}
+        .btn-save:hover{background:#f0f3f7;transform:translateY(-1px);}
+        .status-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600;margin-left:4px;}
+        .status-chip.ok{background:rgba(16,185,129,0.25);color:#a7f3d0;}
+        .status-chip.err{background:rgba(239,68,68,0.25);color:#fecaca;}
+        .status-chip.warn{background:rgba(251,191,36,0.25);color:#fef08a;}
+        .dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+        .dot.ok{background:#10b981;animation:pulse 1.6s infinite;}
+        .dot.err{background:#ef4444;}
+        .dot.warn{background:#fbbf24;}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+        .diagnose{margin-top:14px;background:#fff;border-radius:10px;padding:16px 18px;color:#444;font-size:13.5px;line-height:1.7;box-shadow:0 2px 8px rgba(0,0,0,0.06);display:none;}
+        .diagnose.show{display:block;animation:fadeIn 0.2s;}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+        .diagnose h4{font-size:15px;color:#ef4444;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+        .diagnose h4.ok{color:#10b981;}
+        .diagnose ul{margin-left:20px;margin-top:6px;}
+        .diagnose code{background:#f1f5f9;padding:2px 6px;border-radius:4px;color:#be123c;font-size:12.5px;}
+        .diagnose .steps{background:#f8fafc;border-radius:8px;padding:10px 14px;margin-top:8px;border-left:3px solid #667eea;}
+        .diagnose .steps b{color:#667eea;}
+
+        .tabs{display:flex;gap:8px;margin-bottom:20px;background:#fff;padding:8px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);}
+        .tab{flex:1;padding:12px 20px;text-align:center;border-radius:8px;font-weight:600;font-size:15px;cursor:pointer;transition:all 0.25s;color:#666;}
+        .tab:hover{background:#f0f3f7;}
+        .tab.active{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;box-shadow:0 4px 12px rgba(102,126,234,0.35);}
+
+        .panel{background:#fff;border-radius:14px;padding:26px 28px;box-shadow:0 2px 12px rgba(0,0,0,0.06);margin-bottom:20px;}
+        .panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+        .panel-title{font-size:19px;font-weight:700;color:#2c3e50;display:flex;align-items:center;gap:8px;}
+        .btn{padding:9px 18px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;}
+        .btn:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(0,0,0,0.12);}
+        .btn:active{transform:translateY(0);}
+        .btn-primary{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;}
+        .btn-success{background:linear-gradient(135deg,#11998e,#38ef7d);color:#fff;}
+        .btn-warning{background:linear-gradient(135deg,#f6d365,#fda085);color:#fff;}
+        .btn-danger{background:linear-gradient(135deg,#f5576c,#f093fb);color:#fff;}
+        .btn-ghost{background:#f5f7fa;color:#666;}
+        .btn-sm{padding:6px 12px;font-size:12px;}
+
+        .search-row{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:flex-end;}
+        .search-row input{padding:9px 14px;border:1px solid #dee2e6;border-radius:8px;font-size:14px;outline:none;transition:all 0.2s;min-width:160px;}
+        .search-row input:focus{border-color:#667eea;box-shadow:0 0 0 3px rgba(102,126,234,0.12);}
+        .search-label{font-size:13px;color:#666;display:flex;align-items:center;margin-right:2px;}
+
+        .stats{display:flex;gap:14px;margin-bottom:20px;flex-wrap:wrap;}
+        .stat{background:#f8f9fa;border-radius:10px;padding:13px 18px;min-width:150px;flex:1;}
+        .stat-label{font-size:12px;color:#868e96;margin-bottom:4px;}
+        .stat-value{font-size:21px;font-weight:700;color:#2c3e50;}
+        .stat.blue .stat-value{color:#667eea;}
+        .stat.green .stat-value{color:#11998e;}
+        .stat.orange .stat-value{color:#fda085;}
+
+        table{width:100%;border-collapse:collapse;}
+        thead th{background:#f8f9fa;color:#495057;font-weight:600;padding:12px 10px;text-align:center;border-bottom:2px solid #e9ecef;font-size:13px;}
+        tbody td{padding:12px 10px;text-align:center;border-bottom:1px solid #f1f3f5;font-size:14px;color:#555;}
+        tbody tr{transition:background 0.18s;}
+        tbody tr:hover{background:#f8f9ff;}
+        .price{color:#11998e;font-weight:700;}
+        .tag{display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;}
+        .tag-blue{background:#e7f3ff;color:#007bff;}
+        .tag-gray{background:#f0f0f0;color:#888;}
+        .user-link{color:#007bff;cursor:pointer;text-decoration:none;}
+        .user-link:hover{text-decoration:underline;}
+
+        .empty{padding:56px 20px;text-align:center;color:#aaa;font-size:15px;}
+        .empty a{color:#667eea;font-weight:600;}
+        .loading{padding:40px;text-align:center;color:#667eea;font-weight:600;}
+        .loading::after{content:'...';animation:dot 1.2s steps(4,end) infinite;}
+        @keyframes dot{0%,20%{content:'.'}40%{content:'..'}60%,100%{content:'...'}}
+
+        .mask{position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:999;padding:20px;}
+        .mask.show{display:flex;animation:fade 0.2s;}
+        @keyframes fade{from{opacity:0}to{opacity:1}}
+        .modal{background:#fff;border-radius:14px;padding:28px 30px;width:100%;max-width:460px;animation:slide 0.25s;}
+        @keyframes slide{from{transform:translateY(-20px);opacity:0}to{transform:translateY(0);opacity:1}}
+        .modal h3{font-size:19px;color:#2c3e50;margin-bottom:20px;font-weight:700;}
+        .form-item{margin-bottom:17px;}
+        .form-item label{display:block;margin-bottom:6px;font-size:13px;font-weight:600;color:#495057;}
+        .form-item label .req{color:#f5576c;margin-left:2px;}
+        .form-item input,.form-item select{width:100%;padding:10px 13px;border:1px solid #dee2e6;border-radius:8px;font-size:14px;outline:none;transition:all 0.2s;}
+        .form-item input:focus,.form-item select:focus{border-color:#667eea;box-shadow:0 0 0 3px rgba(102,126,234,0.12);}
+        .modal-footer{display:flex;gap:10px;margin-top:24px;}
+        .modal-footer .btn{flex:1;padding:11px;justify-content:center;}
+
+        .toast{position:fixed;top:30px;left:50%;transform:translateX(-50%) translateY(-80px);background:#fff;padding:12px 24px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.15);font-size:14px;font-weight:500;z-index:2000;transition:all 0.3s;opacity:0;max-width:92%;}
+        .toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+        .toast.success{border-left:4px solid #11998e;}
+        .toast.error{border-left:4px solid #f5576c;}
+        .toast.info{border-left:4px solid #667eea;}
+
+        .log-panel{background:#1e1e2e;color:#cdd6f4;border-radius:12px;padding:16px 18px;font-family:'SF Mono',Consolas,Monaco,monospace;font-size:12.5px;max-height:300px;overflow-y:auto;line-height:1.7;}
+        .log-panel .log-time{color:#6c7086;margin-right:8px;}
+        .log-panel .log-get{color:#a6e3a1;}
+        .log-panel .log-post{color:#89b4fa;}
+        .log-panel .log-err{color:#f38ba8;}
+        .log-panel .log-ok{color:#f9e2af;}
+        .log-panel .log-http{color:#eba0ac;margin-left:8px;}
+        .log-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #313244;position:sticky;top:0;background:#1e1e2e;z-index:2;}
+        .log-title span{font-size:13px;font-weight:600;color:#cdd6f4;}
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div class="top-card">
+        <h1>🚀 API 接口调用演示台 <span class="status-chip warn" id="conn-chip"><span class="dot warn"></span><span id="conn-text">未检测</span></span></h1>
+        <p>本页面 <b>纯前端 HTML+JS</b> 实现，所有数据增删改查都通过 <b>fetch()</b> 调用 <code style="background:rgba(255,255,255,0.15);padding:2px 6px;border-radius:4px;">api.php</code> 接口</p>
+        <div class="config-bar">
+            <div class="config-row">
+                <label>📡 API地址:</label>
+                <input type="text" id="api-url" placeholder="请输入 api.php 的完整 URL，例如：/myapp/api.php 或 http://xxx.com/api.php">
+                <button class="btn btn-save" onclick="saveApiUrl()">💾 保存</button>
+                <button class="btn btn-test" onclick="testApiConn()">🔌 测试连接</button>
+            </div>
+        </div>
+        <div class="diagnose" id="diag-box"></div>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" data-tab="user">👥 用户管理</div>
+        <div class="tab" data-tab="order">📦 订单管理</div>
+        <div class="tab" data-tab="log">📋 调用日志</div>
+    </div>
+
+    <div class="panel" id="tab-user">
+        <div class="panel-head">
+            <div class="panel-title">👥 用户列表</div>
+            <button class="btn btn-success" onclick="openUserModal()">➕ 新增用户</button>
+        </div>
+        <div class="stats">
+            <div class="stat blue"><div class="stat-label">用户总数</div><div class="stat-value" id="user-total">0</div></div>
+        </div>
+        <div id="user-table-wrap"><div class="loading">加载中</div></div>
+    </div>
+
+    <div class="panel" id="tab-order" style="display:none;">
+        <div class="panel-head">
+            <div class="panel-title">📦 订单列表</div>
+            <button class="btn btn-success" onclick="openOrderModal()">➕ 新增订单</button>
+        </div>
+        <div class="search-row">
+            <span class="search-label">🔍 用户ID：</span>
+            <input type="number" id="search-uid" placeholder="输入用户ID，如 1" min="1">
+            <span class="search-label">🔎 关键词：</span>
+            <input type="text" id="search-kw" placeholder="订单标题/用户名">
+            <button class="btn btn-primary btn-sm" onclick="loadOrders()">🔍 搜索</button>
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('search-uid').value='';document.getElementById('search-kw').value='';loadOrders();">↺ 重置</button>
+        </div>
+        <div class="stats">
+            <div class="stat blue"><div class="stat-label" id="order-stat-count-label">订单总数</div><div class="stat-value" id="order-count">0</div></div>
+            <div class="stat green"><div class="stat-label" id="order-stat-total-label">订单总金额</div><div class="stat-value" id="order-total">¥0.00</div></div>
+        </div>
+        <div id="order-table-wrap"><div class="loading">加载中</div></div>
+    </div>
+
+    <div class="panel" id="tab-log" style="display:none;">
+        <div class="log-panel">
+            <div class="log-title">
+                <span>📡 实时接口调用日志（最新在上）</span>
+                <button class="btn btn-ghost btn-sm" onclick="document.getElementById('log-body').innerHTML=''">🗑️ 清空</button>
+            </div>
+            <div id="log-body"><div style="color:#6c7086;">暂无日志，去操作上面的功能吧～</div></div>
+        </div>
+    </div>
+</div>
+
+<div class="mask" id="user-mask">
+    <div class="modal">
+        <h3 id="user-modal-title">➕ 新增用户</h3>
+        <input type="hidden" id="user-id">
+        <div class="form-item">
+            <label>姓名<span class="req">*</span></label>
+            <input type="text" id="user-name" placeholder="请输入姓名" maxlength="50">
+        </div>
+        <div class="form-item">
+            <label>手机号</label>
+            <input type="text" id="user-phone" placeholder="请输入手机号" maxlength="20">
+        </div>
+        <div class="form-item">
+            <label>地址</label>
+            <input type="text" id="user-address" placeholder="请输入地址" maxlength="255">
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('user-mask')">取消</button>
+            <button class="btn btn-primary" onclick="saveUser()">💾 保存</button>
+        </div>
+    </div>
+</div>
+
+<div class="mask" id="order-mask">
+    <div class="modal">
+        <h3 id="order-modal-title">➕ 新增订单</h3>
+        <input type="hidden" id="order-id">
+        <div class="form-item">
+            <label>下单用户<span class="req">*</span></label>
+            <select id="order-user"></select>
+        </div>
+        <div class="form-item">
+            <label>订单标题<span class="req">*</span></label>
+            <input type="text" id="order-title" placeholder="如：MacBook Pro 订单" maxlength="200">
+        </div>
+        <div class="form-item">
+            <label>订单金额<span class="req">*</span></label>
+            <input type="number" id="order-price" placeholder="0.00" step="0.01" min="0.01">
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('order-mask')">取消</button>
+            <button class="btn btn-primary" onclick="saveOrder()">💾 保存</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ========== API 地址配置 ========== */
+const DEFAULT_API = 'api.php';
+let API_URL = localStorage.getItem('app_api_url') || autoDetectApiPath();
+document.getElementById('api-url').value = API_URL;
+
+function autoDetectApiPath(){
+    const here = location.pathname;
+    const dir = here.substring(0, here.lastIndexOf('/')+1);
+    return dir + 'api.php';
+}
+
+function saveApiUrl(){
+    let url = document.getElementById('api-url').value.trim();
+    if(!url){ url = DEFAULT_API; document.getElementById('api-url').value = url; }
+    API_URL = url;
+    localStorage.setItem('app_api_url', url);
+    toast('API 地址已保存：' + url, 'success');
+    testApiConn();
+}
+
+function setConnStatus(kind, text){
+    const chip = document.getElementById('conn-chip');
+    const dot = chip.querySelector('.dot');
+    chip.className = 'status-chip ' + kind;
+    dot.className = 'dot ' + kind;
+    document.getElementById('conn-text').textContent = text;
+}
+
+function showDiag(html){
+    const box = document.getElementById('diag-box');
+    box.innerHTML = html;
+    box.classList.add('show');
+}
+function hideDiag(){ document.getElementById('diag-box').classList.remove('show'); }
+
+async function testApiConn(){
+    hideDiag();
+    setConnStatus('warn', '检测中...');
+    const url = API_URL + '?action=getUser';
+    try{
+        const t0 = Date.now();
+        const res = await fetch(url, {method:'GET'});
+        const dt = Date.now() - t0;
+        const text = await res.text();
+        if(!res.ok){
+            setConnStatus('err', `HTTP ${res.status}`);
+            showDiag(`<h4>❌ API 请求失败 (HTTP ${res.status})</h4>
+                <div>请求地址：<code>${url}</code></div>
+                <div>HTTP 状态：<code>${res.status} ${res.statusText}</code></div>
+                <div class="steps"><b>💡 修复步骤：</b>
+                <ol style="margin-left:22px;margin-top:4px;">
+                    <li>确认服务器上是否存在 <code>api.php</code> 文件（注意放在哪个文件夹里）</li>
+                    <li>检查 API 地址是否正确，推荐使用<strong>绝对路径</strong>，<span style="color:#667eea;font-weight:700;">按你截图的目录，优先尝试以下几种：</span>
+                        <ul style="margin-left:18px;margin-top:4px;">
+                            <li style="color:#10b981;font-weight:600;">✅ api.php 在 <code>/api/</code> 子文件夹里（你现在的放置方式）→ 填 <code style="background:#dcfce7;">/api/api.php</code></li>
+                            <li>✅ api.php 在网站根目录（和 config.php 平级）→ 填 <code>/api.php</code></li>
+                            <li>✅ 放在 myapp 子目录 → 填 <code>/myapp/api.php</code></li>
+                            <li>完整 URL 兜底方案：<code>http://${location.host}/api/api.php</code> 或 <code>http://${location.host}/api.php</code></li>
+                        </ul>
+                    </li>
+                    <li>修改上方 API 地址后点击「💾 保存」再点「🔌 测试连接」</li>
+                </ol></div>`);
+            return;
+        }
+        try{
+            const json = JSON.parse(text);
+            if(json.code === 200){
+                setConnStatus('ok', `连接正常 (${dt}ms)`);
+                showDiag(`<h4 class="ok">✅ API 连通成功！(${dt}ms)</h4>
+                    <div>请求地址：<code>${url}</code></div>
+                    <div>响应 code：<code>${json.code}</code>，用户数：<code>${(json.data||[]).length}</code> 人</div>
+                    <div style="margin-top:8px;color:#10b981;">🎉 你现在可以正常使用本页所有功能啦！</div>`);
+            }else{
+                setConnStatus('warn', `业务错误 (${json.code})`);
+                showDiag(`<h4>⚠️ 服务器返回业务错误</h4>
+                    <div>响应 code：<code>${json.code}</code>，msg：<code>${json.msg||''}</code></div>`);
+            }
+        }catch(e){
+            setConnStatus('err', '返回非JSON');
+            const preview = text.substring(0, 120).replace(/</g,'&lt;');
+            showDiag(`<h4>❌ 服务器返回的不是 JSON（最常见错误）</h4>
+                <div>请求地址：<code>${url}</code></div>
+                <div>响应前120字：<code style="word-break:break-all;">${preview}...</code></div>
+                <div class="steps"><b>🔍 错误原因：</b>返回内容以 <code>&lt;html&gt;</code> 开头，说明服务器返回了一个网页（很可能是 <b>404 页面</b>），而不是 api.php 的 JSON 数据。
+                <br><br><b>💡 修复步骤：</b>
+                <ol style="margin-left:22px;margin-top:6px;">
+                    <li>先在浏览器新标签页单独访问 API 地址，确认能看到 JSON 文字（不是 404 网页）</li>
+                    <li>根据 <code>api.php</code> 实际放置的位置，<span style="color:#667eea;font-weight:700;">优先尝试以下路径：</span>
+                        <ul style="margin-left:18px;margin-top:4px;">
+                            <li style="color:#10b981;font-weight:600;">✅ 放在 <code>/api/</code> 文件夹里（你当前截图的位置）→ 填 <code style="background:#dcfce7;">/api/api.php</code></li>
+                            <li>✅ 放在网站根目录（和 config.php/index.php 平级）→ 填 <code>/api.php</code></li>
+                            <li>✅ 完整 URL 兜底：<code>http://${location.host}/api/api.php</code> 或 <code>http://${location.host}/api.php</code></li>
+                            <li>你当前 app.html 路径是 <code>${location.pathname}</code></li>
+                        </ul>
+                    </li>
+                    <li>修改完地址点「💾 保存」→「🔌 测试连接」直到显示✅</li>
+                </ol></div>`);
+        }
+    }catch(e){
+        setConnStatus('err', '请求失败');
+        showDiag(`<h4>❌ 网络请求失败：${e.message}</h4>
+            <div>请求地址：<code>${url}</code></div>
+            <div class="steps"><b>💡 可能原因：</b>
+                <ol style="margin-left:22px;margin-top:6px;">
+                    <li><b>跨域 CORS</b>：app.html 所在域名和 api.php 域名不一致</li>
+                    <li>使用了 <code>file://</code> 直接打开 → 必须用 http 协议访问</li>
+                    <li>服务器暂时不可达</li>
+                </ol>
+            </div>`);
+    }
+}
+
+/* ========== 通用工具 ========== */
+function toast(msg, type='info'){
+    const t = document.getElementById('toast');
+    t.className = 'toast show ' + type;
+    t.textContent = msg;
+    setTimeout(()=>t.className='toast ' + type, 2300);
+}
+function log(type, action, data, extra='', isErr=false){
+    const time = new Date().toLocaleTimeString('zh-CN',{hour12:false});
+    const cls = isErr ? 'log-err' : (type==='GET'?'log-get':'log-post');
+    const pre = isErr ? '❌' : '✅';
+    const line = document.createElement('div');
+    let pdata = '';
+    if(data){
+        try{ pdata = typeof data==='object' ? JSON.stringify(data) : String(data); }catch(e){ pdata=''; }
+    }
+    line.innerHTML = `<span class="log-time">[${time}]</span><span class="${cls}">[${type}]</span> <span class="log-ok">${action}</span> ${pre} ${pdata}<span class="log-http">${extra?' · '+extra:''}</span>`;
+    const body = document.getElementById('log-body');
+    const ph = body.querySelector('div[style]');
+    if(ph && !isErr) ph.remove();
+    body.insertBefore(line, body.firstChild);
+}
+
+async function api(action, method='GET', formData=null){
+    let url = API_URL + (API_URL.includes('?') ? '&' : '?') + 'action=' + action;
+    const opt = {method, credentials:'include'};
+    if(method==='POST' && formData){ opt.body = formData; }
+    const t0 = Date.now();
+    log(method, action, formData?Object.fromEntries(formData):null);
+    try{
+        const res = await fetch(url, opt);
+        const dt = Date.now() - t0;
+        if(!res.ok){
+            const errText = (await res.text()).substring(0, 80);
+            const msg = `HTTP ${res.status}: ${errText}`;
+            log(method, action, null, `HTTP${res.status} ${dt}ms`, true);
+            toast('接口错误：HTTP '+res.status, 'error');
+            return null;
+        }
+        const text = await res.text();
+        let json;
+        try{
+            json = JSON.parse(text);
+        }catch(e){
+            const preview = text.substring(0, 60).replace(/</g,'\\<');
+            log(method, action, null, `非JSON ${dt}ms`, true);
+            toast('服务器返回非JSON！点击「🔌测试连接」诊断', 'error');
+            return null;
+        }
+        if(json.code !== 200){
+            log(method, action, null, `err code=${json.code} ${dt}ms`, true);
+            toast(json.msg || ('错误 code='+json.code), 'error');
+            return null;
+        }
+        log(method, action, null, `ok ${dt}ms`, false);
+        return json;
+    }catch(e){
+        log(method, action, null, 'Exception: '+e.message, true);
+        toast('网络失败：'+e.message, 'error');
+        return null;
+    }
+}
+
+/* ========== Tab切换 ========== */
+document.querySelectorAll('.tab').forEach(t=>{
+    t.onclick = ()=>{
+        document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+        t.classList.add('active');
+        ['user','order','log'].forEach(n=>{
+            document.getElementById('tab-'+n).style.display = (t.dataset.tab===n)?'block':'none';
+        });
+        if(t.dataset.tab==='order' && !window._orderLoaded){ loadOrders(); window._orderLoaded=true; }
+    };
+});
+
+/* ========== 用户模块 ========== */
+let USER_LIST = [];
+async function loadUsers(){
+    const wrap = document.getElementById('user-table-wrap');
+    wrap.innerHTML = '<div class="loading">加载中</div>';
+    const json = await api('getUser','GET');
+    if(!json){ wrap.innerHTML = '<div class="empty">加载失败，请点击顶部「🔌 测试连接」检查API配置</div>'; return; }
+    const list = json.data || [];
+    USER_LIST = list;
+    document.getElementById('user-total').textContent = list.length;
+    if(list.length===0){ wrap.innerHTML = '<div class="empty">暂无用户，点击右上「新增用户」添加</div>'; return; }
+    wrap.innerHTML = `<table>
+        <thead><tr><th>ID</th><th>姓名</th><th>手机号</th><th>地址</th><th>创建时间</th><th>操作</th></tr></thead>
+        <tbody>${list.map(u=>`<tr>
+            <td>#${u.id}</td>
+            <td><b>${esc(u.name)}</b></td>
+            <td>${esc(u.phone||'-')}</td>
+            <td>${esc(u.address||'-')}</td>
+            <td>${u.create_time}</td>
+            <td>
+                <button class="btn btn-warning btn-sm" onclick="editUser(${u.id})">✏️ 编辑</button>
+                <button class="btn btn-danger btn-sm" onclick="delUser(${u.id})">🗑️ 删除</button>
+            </td>
+        </tr>`).join('')}</tbody></table>`;
+}
+function openUserModal(){
+    document.getElementById('user-modal-title').textContent = '➕ 新增用户';
+    document.getElementById('user-id').value = '';
+    document.getElementById('user-name').value = '';
+    document.getElementById('user-phone').value = '';
+    document.getElementById('user-address').value = '';
+    document.getElementById('user-mask').classList.add('show');
+    setTimeout(()=>document.getElementById('user-name').focus(), 120);
+}
+function editUser(id){
+    const u = USER_LIST.find(x=>x.id==id); if(!u) return;
+    document.getElementById('user-modal-title').textContent = '✏️ 编辑用户 (ID:'+id+')';
+    document.getElementById('user-id').value = id;
+    document.getElementById('user-name').value = u.name||'';
+    document.getElementById('user-phone').value = u.phone||'';
+    document.getElementById('user-address').value = u.address||'';
+    document.getElementById('user-mask').classList.add('show');
+}
+async function saveUser(){
+    const id = document.getElementById('user-id').value;
+    const name = document.getElementById('user-name').value.trim();
+    const phone = document.getElementById('user-phone').value.trim();
+    const address = document.getElementById('user-address').value.trim();
+    if(!name){ toast('姓名不能为空','error'); return; }
+    const fd = new FormData();
+    fd.append('name',name); fd.append('phone',phone); fd.append('address',address);
+    let res;
+    if(id){ fd.append('id',id); res = await api('editUser','POST',fd); }
+    else{ res = await api('addUser','POST',fd); }
+    if(res){
+        toast(id?'修改成功':'新增成功','success');
+        closeModal('user-mask');
+        loadUsers();
+    }
+}
+async function delUser(id){
+    if(!confirm('确定删除用户 #'+id+'？')) return;
+    const fd = new FormData(); fd.append('id',id);
+    const res = await api('delUser','POST',fd);
+    if(res){ toast('删除成功','success'); loadUsers(); }
+}
+
+/* ========== 订单模块 ========== */
+async function loadOrders(){
+    const wrap = document.getElementById('order-table-wrap');
+    wrap.innerHTML = '<div class="loading">加载中</div>';
+    const uid = parseInt(document.getElementById('search-uid').value)||0;
+    const kw = document.getElementById('search-kw').value.trim();
+    const json = await api('getOrder','GET');
+    if(!json){ wrap.innerHTML = '<div class="empty">加载失败，请点击顶部「🔌 测试连接」检查API配置</div>'; return; }
+    let list = json.data || [];
+    if(uid>0){ list = list.filter(o=>o.user_id==uid); }
+    if(kw){ list = list.filter(o=>(o.order_title+' '+(o.user_name||'')).toLowerCase().includes(kw.toLowerCase())); }
+    const count = list.length;
+    const total = list.reduce((s,o)=>s+parseFloat(o.price||0),0);
+    const filterLabel = (uid>0||kw) ? '筛选后' : '';
+    document.getElementById('order-stat-count-label').textContent = filterLabel+'订单数';
+    document.getElementById('order-stat-total-label').textContent = filterLabel+'总金额';
+    document.getElementById('order-count').textContent = count;
+    document.getElementById('order-total').textContent = '¥'+total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+    if(list.length===0){
+        wrap.innerHTML = '<div class="empty">'+(uid>0||kw?'😕 没有找到符合条件的订单，点击「重置」查看全部':'暂无订单数据，点击右上「新增订单」添加')+'</div>';
+        return;
+    }
+    wrap.innerHTML = `<table>
+        <thead><tr><th>订单ID</th><th>下单用户</th><th>订单标题</th><th>金额</th><th>创建时间</th><th>操作</th></tr></thead>
+        <tbody>${list.map(o=>`<tr>
+            <td>#${o.id}</td>
+            <td>${o.user_name?`<a class="user-link" onclick="document.getElementById('search-uid').value=${o.user_id};loadOrders();">${esc(o.user_name)}(UID:${o.user_id})</a>`:`<span class="tag tag-gray">用户已删除(UID:${o.user_id})</span>`}</td>
+            <td>${esc(o.order_title)}</td>
+            <td class="price">¥${parseFloat(o.price).toFixed(2)}</td>
+            <td>${o.create_time}</td>
+            <td>
+                <button class="btn btn-warning btn-sm" onclick='editOrder(${o.id}, ${JSON.stringify(o)})'>✏️ 编辑</button>
+                <button class="btn btn-danger btn-sm" onclick="delOrder(${o.id})">🗑️ 删除</button>
+            </td>
+        </tr>`).join('')}</tbody></table>`;
+}
+
+async function loadUserSelect(selectId){
+    const sel = document.getElementById(selectId);
+    sel.innerHTML = '<option value="">-- 加载中 --</option>';
+    const json = await api('getUser','GET');
+    if(!json){ sel.innerHTML = '<option value="">加载用户失败</option>'; return; }
+    const list = json.data || [];
+    if(list.length===0){ sel.innerHTML = '<option value="">请先新增用户</option>'; return; }
+    sel.innerHTML = '<option value="">-- 请选择用户 --</option>' + list.map(u=>`<option value="${u.id}">${esc(u.name)} (ID:${u.id})</option>`).join('');
+}
+
+async function openOrderModal(){
+    document.getElementById('order-modal-title').textContent = '➕ 新增订单';
+    document.getElementById('order-id').value = '';
+    document.getElementById('order-title').value = '';
+    document.getElementById('order-price').value = '';
+    await loadUserSelect('order-user');
+    document.getElementById('order-mask').classList.add('show');
+    setTimeout(()=>document.getElementById('order-title').focus(), 120);
+}
+async function editOrder(id, o){
+    document.getElementById('order-modal-title').textContent = '✏️ 编辑订单 (ID:'+id+')';
+    document.getElementById('order-id').value = id;
+    document.getElementById('order-title').value = o.order_title||'';
+    document.getElementById('order-price').value = o.price;
+    await loadUserSelect('order-user');
+    document.getElementById('order-user').value = o.user_id;
+    document.getElementById('order-mask').classList.add('show');
+}
+async function saveOrder(){
+    const id = document.getElementById('order-id').value;
+    const user_id = document.getElementById('order-user').value;
+    const order_title = document.getElementById('order-title').value.trim();
+    const price = document.getElementById('order-price').value;
+    if(!user_id){ toast('请选择下单用户','error'); return; }
+    if(!order_title){ toast('订单标题不能为空','error'); return; }
+    if(!price || parseFloat(price)<=0){ toast('订单金额必须大于0','error'); return; }
+    const fd = new FormData();
+    fd.append('user_id',user_id); fd.append('order_title',order_title); fd.append('price',price);
+    let res;
+    if(id){ fd.append('id',id); res = await api('editOrder','POST',fd); }
+    else{ res = await api('addOrder','POST',fd); }
+    if(res){
+        toast(id?'修改成功':'新增成功','success');
+        closeModal('order-mask');
+        loadOrders();
+    }
+}
+async function delOrder(id){
+    if(!confirm('确定删除订单 #'+id+'？')) return;
+    const fd = new FormData(); fd.append('id',id);
+    const res = await api('delOrder','POST',fd);
+    if(res){ toast('删除成功','success'); loadOrders(); }
+}
+
+/* ========== 工具 ========== */
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+document.querySelectorAll('.mask').forEach(m=>{
+    m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('show'); });
+});
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') document.querySelectorAll('.mask.show').forEach(m=>m.classList.remove('show')); });
+function esc(s){ return (s==null?'':String(s)).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ========== 初始化 ========== */
+testApiConn();
+loadUsers();
+</script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<view wx:if="{{!user}}" class="empty-box">
+  <view class="hero" style="text-align:center;">
+    <view style="padding:80rpx 0;">
+      <view style="font-size:120rpx;">🔐</view>
+      <view style="font-size:32rpx;font-weight:700;color:#fff;margin-top:20rpx;">您还未登录</view>
+      <view style="color:rgba(255,255,255,0.8);margin-top:12rpx;">登录后即可查看您的所有订单</view>
+      <button class="btn btn-green" style="margin-top:40rpx;padding:20rpx 60rpx;border-radius:40rpx;" bindtap="goLogin">立即登录</button>
+    </view>
+  </view>
+</view>
+
+<block wx:else>
+  <!-- Tab 栏 -->
+  <view class="tabs-bar">
+    <view wx:for="{{tabs}}" wx:key="id" class="tab {{item.active?'on':''}}" data-id="{{item.id}}" bindtap="onTab">
+      {{item.name}}
+      <text wx:if="{{item.c>0}}" class="t-n">{{item.c}}</text>
+    </view>
+  </view>
+
+  <view class="container">
+    <view wx:if="{{loading}}" style="text-align:center;padding:100rpx 0;color:#94a3b8;">
+      📦 加载订单中...
+    </view>
+
+    <view wx:elif="{{orders.length===0}}" class="empty">
+      <text class="empty-emoji">🧾</text>
+      <view class="empty-txt">该分类下暂时没有订单</view>
+      <button class="btn btn-outline" style="margin-top:20rpx;" bindtap="goIndex">去商城逛逛</button>
+    </view>
+
+    <block wx:else>
+      <view wx:for="{{orders}}" wx:key="id" class="card order-card">
+        <!-- 顶栏 -->
+        <view class="oc-top">
+          <view class="oc-id">#{{item.id}}</view>
+          <view class="oc-sts">
+            <text class="tag {{item._st_cls}}">{{item._st_emj}} {{item._st_txt}}</text>
+            <text class="tag {{item._pay_cls}}" style="margin-left:10rpx;">{{item._pay_txt}}</text>
+            <text wx:if="{{item._rf_cls}}" class="tag {{item._rf_cls}}" style="margin-left:10rpx;">{{item._rf_emj}} {{item._rf_txt}}</text>
+          </view>
+        </view>
+        <!-- 商品行 -->
+        <view class="goods-row" data-id="{{item.id}}" bindtap="goDetail">
+          <view class="g-img">
+            <image wx:if="{{item.goods_image}}" src="{{item.goods_image}}" mode="aspectFill"></image>
+            <text wx:else style="font-size:50rpx;">📦</text>
+          </view>
+          <view class="g-info">
+            <view class="g-name">
+              {{item.goods_name || item.order_title || '商品订单'}}
+            </view>
+            <view class="g-meta">
+              单价 ¥{{item._unit}} × {{item._qty}} 件
+            </view>
+            <view class="g-time">{{item.create_time}}</view>
+          </view>
+          <view class="g-right">
+            <view class="price price-md">¥ {{item._total}}</view>
+          </view>
+        </view>
+
+        <!-- 物流信息卡（已发货时显示） -->
+        <view wx:if="{{item._has_ship}}" class="ship-card" data-id="{{item.id}}" bindtap="goDetail">
+          <view class="ship-line">
+            🚚 <b style="color:#4f46e5;">{{item._ship.company || '快递'}}</b>
+            <view class="copy-btn" data-v="{{item._ship.no}}" data-c="运单号已复制" catchtap="copy">
+              📋 {{item._ship.no}}
+            </view>
+            <text wx:if="{{item._ship.time}}" style="color:#64748b;margin-left:12rpx;">🕓 {{item._ship.time}}</text>
+          </view>
+          <view wx:if="{{item._ship.name}}" class="ship-line">
+            👤 <b>{{item._ship.name}}</b> {{item._ship.phone}}
+          </view>
+          <view wx:if="{{item._ship.addr}}" class="ship-line">📍 {{item._ship.addr}}</view>
+        </view>
+
+        <view class="oc-actions">
+          <view class="btn btn-outline btn-sm" data-id="{{item.id}}" bindtap="goDetail">
+            📄 查看详情
+          </view>
+          <view wx:if="{{item._can_refund}}" class="btn btn-danger btn-sm" data-id="{{item.id}}" catchtap="goRefund">
+            💸 申请退款
+          </view>
+        </view>
+      </view>
+    </block>
+  </view>
+</block>

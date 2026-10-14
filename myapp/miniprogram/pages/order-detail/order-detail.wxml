@@ -1,0 +1,180 @@
+<view wx:if="{{loading}}" style="padding:200rpx 0;text-align:center;color:#94a3b8;">
+  <view style="font-size:80rpx;">🧾</view><view style="margin-top:16rpx;">加载订单详情...</view>
+</view>
+
+<block wx:elif="{{order}}">
+  <!-- 顶部状态卡 -->
+  <view class="hero">
+    <view class="hero-row">
+      <view class="hero-emoji">{{stEmoji}}</view>
+      <view class="hero-txt">
+        <h1>{{stText}}
+          <text wx:if="{{order._pay_txt}}" class="tag {{order._pay_cls}}" style="margin-left:14rpx;font-size:22rpx;">{{order._pay_txt}}</text>
+        </h1>
+        <view wx:if="{{ship}}" style="margin-top:10rpx;">
+          🚚 {{ship.company || '快递'}} · 发货时间 {{ship.time||'--'}}
+        </view>
+        <view wx:else style="margin-top:10rpx;">
+          ⏳ 商家正在准备您的商品，发货后会第一时间通知您
+        </view>
+      </view>
+      <view class="hero-price">
+        <view style="font-size:22rpx;opacity:.9;margin-bottom:6rpx;">实付金额</view>
+        <view class="hero-num">¥ {{priceTotal}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="container" style="margin-top:-30rpx;">
+
+    <!-- 商品信息 -->
+    <view class="card">
+      <view class="card-title">🛍️ 商品信息</view>
+      <view class="goods-row">
+        <view class="g-img">
+          <image wx:if="{{order.goods_image}}" src="{{order.goods_image}}" mode="aspectFill"></image>
+          <text wx:else>📦</text>
+        </view>
+        <view class="g-info">
+          <view class="g-name">{{order.goods_name || order.order_title || '商品订单'}}</view>
+          <view class="g-meta">单价 ¥{{priceUnit}} × {{order._qty}}</view>
+        </view>
+        <view class="g-right">
+          <view class="price price-md">¥ {{priceTotal}}</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 收货信息 -->
+    <view wx:if="{{ship}}" class="card">
+      <view class="card-title">📍 收货信息</view>
+      <view class="ship-card">
+        <view class="ship-row">
+          <view class="ship-lbl">👤 收件人</view>
+          <view class="ship-val">
+            <b>{{ship.name||'--'}}</b>
+            <text wx:if="{{ship.phone}}" bindtap="callPhone" style="color:#667eea;margin-left:14rpx;">
+              📞 {{ship.phone}}
+            </text>
+          </view>
+        </view>
+        <view class="ship-row">
+          <view class="ship-lbl">📍 地址</view>
+          <view class="ship-val">{{ship.addr||'--'}}</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 物流时间线 -->
+    <view class="card">
+      <view class="card-title">
+        🚚 物流跟踪
+        <block wx:if="{{ship}}">
+          <view style="margin-left:auto;display:flex;align-items:center;gap:10rpx;font-size:22rpx;color:#64748b;font-weight:500;">
+            <text>{{ship.company||''}}</text>
+            <view class="copy-box" data-v="{{ship.no}}" data-c="运单号已复制" bindtap="copy">📋 {{ship.no||'--'}}</view>
+          </view>
+        </block>
+      </view>
+
+      <view wx:if="{{!timeline.length}}" style="text-align:center;padding:60rpx 0;color:#94a3b8;font-size:24rpx;">
+        暂无物流信息，请耐心等待商家发货
+      </view>
+
+      <view class="timeline">
+        <view wx:for="{{timeline}}" wx:key="index"
+              class="t-item {{item.done?'done':'todo'}} {{index===timeline.length-1?'last':''}}">
+          <view class="t-icon c-{{item.color}}">{{item.icon}}</view>
+          <view class="t-body">
+            <view class="t-title">{{item.title}}</view>
+            <view class="t-time">🕓 {{item.time}}</view>
+            <view wx:if="{{item.desc}}" class="t-desc">{{item.desc}}</view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 退款信息卡（状态卡） -->
+    <view wx:if="{{rfStatus > 0}}" class="card refund-card {{rfStatus===1?'apply':rfStatus===2?'done':'reject'}}">
+      <view class="card-title">
+        <text wx:if="{{rfStatus===1}}">⏳ 退款申请中</text>
+        <text wx:elif="{{rfStatus===2}}">💸 退款成功</text>
+        <text wx:else>❌ 退款被拒</text>
+      </view>
+      <view wx:if="{{order.refund_reason}}" class="rf-row">
+        <view class="rf-l">退款原因</view>
+        <view class="rf-r">{{order.refund_reason}}</view>
+      </view>
+      <view wx:if="{{order.refund_remark}}" class="rf-row">
+        <view class="rf-l">补充说明</view>
+        <view class="rf-r">{{order.refund_remark}}</view>
+      </view>
+      <view wx:if="{{order.refund_time}}" class="rf-row">
+        <view class="rf-l">处理时间</view>
+        <view class="rf-r">{{order.refund_time}}</view>
+      </view>
+      <view wx:if="{{rfStatus===2}}" class="rf-row success-box">
+        <text style="font-weight:700;">✅ 退款金额 ¥{{priceTotal}} 已退回余额，请注意查收</text>
+      </view>
+    </view>
+
+    <!-- 申请退款面板 -->
+    <view wx:if="{{canApply}}" class="card refund-apply-card">
+      <view class="card-title">
+        💸 申请退款
+        <text wx:if="{{!showApplyPanel}}" style="margin-left:auto;color:#64748b;font-size:22rpx;" bindtap="toggleApply">收起 ▲</text>
+        <text wx:else style="margin-left:auto;color:#6366f1;font-size:24rpx;font-weight:600;" bindtap="toggleApply">展开填写 ▼</text>
+      </view>
+      <block wx:if="{{showApplyPanel}}">
+        <view wx:if="{{order.status===1}}" class="rf-tip auto">
+          ⚡ 未发货订单可自动退款，提交后立即原路退回到余额
+        </view>
+        <view wx:else class="rf-tip">
+          ⏳ 已发货/已完成订单将在 1-3 个工作日处理
+        </view>
+        <view class="rf-sel-title">请选择退款原因</view>
+        <view class="rf-reasons">
+          <view wx:for="{{reasons}}" wx:key="*this" class="rf-reason {{selReason===item?'on':''}}" bindtap="selReason" data-v="{{item}}">
+            {{item}}
+          </view>
+        </view>
+        <view class="rf-remark-title">补充说明（选填）</view>
+        <textarea class="rf-textarea" placeholder="如有其他问题可以在这里说明，方便客服快速处理" maxlength="200" value="{{remark}}" bindinput="onRemark"/>
+        <button class="btn btn-danger rf-btn" bindtap="submitRefund" loading="{{applying}}" disabled="{{applying}}">
+          {{applying?'提交中...':'提交退款申请'}}
+        </button>
+      </block>
+    </view>
+
+    <!-- 订单信息 -->
+    <view class="card">
+      <view class="card-title">📋 订单信息</view>
+      <view class="info-row">
+        <view class="info-lbl">订单号</view>
+        <view class="info-val" style="display:flex;align-items:center;gap:14rpx;">
+          <text style="font-weight:700;">#{{order.id}}</text>
+          <view class="copy-box sm" data-v="{{order.id}}" data-c="订单号已复制" bindtap="copy">复制</view>
+        </view>
+      </view>
+      <view class="info-row"><view class="info-lbl">下单时间</view><view class="info-val">{{order.create_time}}</view></view>
+      <view wx:if="{{order.pay_time}}" class="info-row"><view class="info-lbl">支付时间</view><view class="info-val">{{order.pay_time}}</view></view>
+      <view wx:if="{{ship && ship.time}}" class="info-row"><view class="info-lbl">发货时间</view><view class="info-val">{{ship.time}}</view></view>
+    </view>
+
+    <!-- 金额明细 -->
+    <view class="card">
+      <view class="card-title">💰 金额明细</view>
+      <view class="price-row"><view class="pr-l">商品单价</view><view class="pr-r">¥ {{priceUnit}}</view></view>
+      <view class="price-row"><view class="pr-l">购买数量</view><view class="pr-r">× {{order._qty}}</view></view>
+      <view class="price-row"><view class="pr-l">商品小计</view><view class="pr-r">¥ {{priceTotal}}</view></view>
+      <view class="price-row"><view class="pr-l">运费</view><view class="pr-r">¥ 0.00（包邮）</view></view>
+      <view class="price-row"><view class="pr-l">优惠</view><view class="pr-r">- ¥ 0.00</view></view>
+      <view class="price-row total">
+        <view class="pr-l" style="font-size:28rpx;font-weight:700;">应付总额</view>
+        <view class="pr-r price price-lg" style="color:#ef4444;">¥ {{priceTotal}}</view>
+      </view>
+    </view>
+
+    <view style="height:60rpx;"></view>
+  </view>
+</block>

@@ -1,0 +1,42 @@
+<view class="page" wx:if="{{!loading}}">
+  <view class="form-card">
+    <view class="form-item">
+      <view class="label">收货人</view>
+      <input class="inp" placeholder="请输入收货人姓名" value="{{name}}" data-k="name" bindinput="inp" maxlength="20"/>
+    </view>
+    <view class="form-item">
+      <view class="label">手机号</view>
+      <input class="inp" type="number" maxlength="11" placeholder="请输入手机号" value="{{phone}}" data-k="phone" bindinput="inp"/>
+    </view>
+    <view class="form-item">
+      <view class="label">所在地区</view>
+      <picker mode="region" value="{{region}}" bindchange="onRegion">
+        <view class="inp picker-inp {{regionText===''?'ph':''}}">
+          {{regionText || '请选择省 / 市 / 区'}}
+          <text class="picker-arrow">▼</text>
+        </view>
+      </picker>
+    </view>
+    <view class="form-item last">
+      <view class="label">详细地址</view>
+      <input class="inp" placeholder="街道、门牌号、小区楼栋、单元等" value="{{detail}}" data-k="detail" bindinput="inp" maxlength="200"/>
+    </view>
+  </view>
+
+  <view class="def-card" bindtap="onToggleDefault">
+    <view class="rbox {{is_default?'on':''}}"></view>
+    <view class="def-info">
+      <view class="def-title">设为默认地址</view>
+      <view class="def-desc">下单时将自动填入此收货信息</view>
+    </view>
+    <view class="toggle {{is_default?'on':''}}">
+      <view class="dot"></view>
+    </view>
+  </view>
+
+  <view style="height:180rpx;"></view>
+
+  <view class="btn-wrap">
+    <button class="btn btn-primary save-btn" bindtap="onSave" loading="{{saving}}" disabled="{{saving}}">保存</button>
+  </view>
+</view>

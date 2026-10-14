@@ -1,0 +1,65 @@
+.page{ padding:24rpx; min-height:100vh; box-sizing:border-box; }
+
+.empty-wrap{
+  padding:220rpx 40rpx 40rpx;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+.empty-icon{ font-size:140rpx; opacity:0.45; margin-bottom:30rpx; }
+.empty-title{ font-size:34rpx; color:#334155; font-weight:600; margin-bottom:12rpx; }
+.empty-desc{ font-size:26rpx; color:#64748b; margin-bottom:40rpx; }
+.empty-btn{ width:80%; max-width:500rpx; border-radius:50rpx; height:86rpx; line-height:86rpx; font-size:30rpx; }
+
+.addr-list{ display:flex; flex-direction:column; gap:22rpx; }
+
+.addr-card{
+  background:#fff; border-radius:20rpx; padding:28rpx 28rpx 24rpx;
+  box-shadow: 0 4rpx 18rpx rgba(100,116,139,0.06);
+  border:4rpx solid #e2e8f0; position:relative;
+}
+.addr-card.default{
+  border-color:#6366f1;
+  background:linear-gradient(180deg,#eef2ff 0%,#ffffff 30%);
+}
+.addr-row1{ display:flex;align-items:center;gap:20rpx;margin-bottom:14rpx; }
+.name{ font-size:32rpx;font-weight:700;color:#0f172a; }
+.phone{ font-size:28rpx;color:#475569; }
+.def-tag{
+  margin-left:auto; padding:4rpx 16rpx; border-radius:20rpx;
+  font-size:22rpx; background:#6366f1; color:#fff;
+}
+.addr-text{
+  font-size:28rpx; color:#334155; line-height:1.55;
+  padding:8rpx 0 20rpx;
+  border-bottom:2rpx dashed #e2e8f0;
+}
+.addr-row2{
+  display:flex; justify-content:space-between; align-items:center;
+  padding-top:20rpx;
+}
+.op{ display:flex; align-items:center; gap:14rpx; }
+.op-item{ display:flex;align-items:center;gap:10rpx; padding:8rpx 10rpx; }
+.op-item .op-txt{ font-size:24rpx; color:#64748b; }
+.op-item.on .op-txt{ color:#6366f1; font-weight:600; }
+.rbox{
+  width:34rpx;height:34rpx;border-radius:50%;
+  border:3rpx solid #cbd5e1; background:#fff;
+  display:flex;align-items:center;justify-content:center;
+}
+.rbox.on{
+  border-color:#6366f1;
+  background:radial-gradient(circle, #6366f1 46%, transparent 50%);
+}
+.op-right{ display:flex; gap:24rpx; }
+.op-btn{ font-size:24rpx; color:#475569; padding:6rpx 4rpx; }
+.op-btn.del{ color:#ef4444; }
+
+.fab-wrap{
+  position:fixed; left:0; right:0; bottom:0;
+  padding:24rpx 32rpx 48rpx;
+  background:linear-gradient(180deg, rgba(245,247,250,0) 0%, #f5f7fa 40%);
+}
+.fab{
+  width:100%; height:92rpx; line-height:92rpx;
+  border-radius:50rpx; font-size:30rpx; font-weight:600;
+  box-shadow: 0 16rpx 30rpx rgba(99,102,241,0.28);
+}

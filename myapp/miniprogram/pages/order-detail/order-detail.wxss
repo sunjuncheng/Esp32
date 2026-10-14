@@ -1,0 +1,166 @@
+.hero {
+  padding: 40rpx 32rpx 80rpx;
+}
+.hero-row{ display:flex;align-items:center;gap:24rpx;flex-wrap:wrap; }
+.hero-emoji{
+  width:120rpx;height:120rpx;border-radius:30rpx;
+  background:rgba(255,255,255,0.22);backdrop-filter:blur(10rpx);
+  display:flex;align-items:center;justify-content:center;font-size:64rpx;
+  flex-shrink:0;
+}
+.hero-txt{ flex:1; min-width:280rpx; }
+.hero-txt h1{
+  font-size:38rpx;font-weight:800;color:#fff;margin:0 0 8rpx 0;
+  display:flex;align-items:center;
+}
+.hero-txt view{ font-size:24rpx;color:rgba(255,255,255,0.85);line-height:1.6; }
+.hero-price{
+  min-width:200rpx; text-align:right;
+}
+.hero-num{
+  font-size:50rpx;font-weight:900;color:#fff;
+  letter-spacing:-1rpx;font-family:'DIN Alternate',sans-serif;
+}
+
+.goods-row{
+  display:flex;gap:20rpx;align-items:center;
+  padding:10rpx 0;
+}
+.g-img{
+  width:130rpx;height:130rpx;border-radius:16rpx;
+  background:linear-gradient(135deg,#dbeafe,#ede9fe);
+  display:flex;align-items:center;justify-content:center;
+  font-size:62rpx;overflow:hidden;flex-shrink:0;
+}
+.g-img image{ width:100%;height:100%; }
+.g-info{ flex:1; min-width:0;display:flex;flex-direction:column;gap:6rpx; }
+.g-name{ font-size:30rpx;font-weight:700;color:#0f172a;line-height:1.3; }
+.g-meta{ font-size:23rpx;color:#64748b; }
+.g-right{ min-width:160rpx; text-align:right; }
+
+.ship-card{
+  background:linear-gradient(135deg,#eff6ff,#ede9fe);
+  border:1rpx solid #c7d2fe;border-radius:14rpx;padding:20rpx 24rpx;
+}
+.ship-row{
+  display:flex;gap:14rpx;margin-bottom:10rpx;align-items:flex-start;
+}
+.ship-row:last-child{ margin-bottom:0; }
+.ship-lbl{ flex:0 0 140rpx;color:#4f46e5;font-weight:700;font-size:24rpx; }
+.ship-val{ flex:1;font-size:26rpx;color:#1e1b4b;line-height:1.6; }
+
+/* 复制小框 */
+.copy-box{
+  display:inline-flex;align-items:center;gap:4rpx;
+  padding:6rpx 16rpx;border-radius:10rpx;
+  background:#eff6ff;color:#667eea;border:1rpx solid #c7d2fe;
+  font-size:22rpx;font-weight:700;
+  transition:all .15s;
+}
+.copy-box:active{ background:#667eea;color:#fff; }
+.copy-box.sm{ padding:4rpx 12rpx;font-size:20rpx; }
+
+/* 时间线 */
+.timeline{ padding:10rpx 0 0; }
+.t-item{
+  position:relative; padding-left:90rpx; padding-bottom:36rpx;
+}
+.t-item.last{ padding-bottom:6rpx; }
+.t-item::before{
+  content:"";position:absolute;left:39rpx;top:70rpx;bottom:-2rpx;width:4rpx;background:#e2e8f0;
+}
+.t-item.last::before{ display:none; }
+.t-icon{
+  position:absolute;left:0;top:0;
+  width:80rpx;height:80rpx;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:34rpx;color:#fff;
+  box-shadow:0 6rpx 18rpx rgba(0,0,0,0.1);
+}
+.t-icon.c-green { background:linear-gradient(135deg,#10b981,#059669); }
+.t-icon.c-blue  { background:linear-gradient(135deg,#3b82f6,#6366f1); }
+.t-icon.c-purple{ background:linear-gradient(135deg,#8b5cf6,#7c3aed); }
+.t-icon.c-gray  { background:#cbd5e1; color:#fff; }
+.t-item.todo .t-icon { opacity:0.5; filter:grayscale(.3); }
+
+.t-body{ }
+.t-title{ font-size:28rpx;font-weight:700;color:#0f172a;margin-bottom:6rpx; }
+.t-item.todo .t-title{ color:#94a3b8; }
+.t-time{ font-size:22rpx;color:#94a3b8;margin-bottom:8rpx;display:inline-block; }
+.t-desc{ font-size:25rpx;color:#475569;line-height:1.7;white-space:pre-line; }
+
+.info-row{
+  display:flex;gap:20rpx;padding:16rpx 0;border-bottom:1rpx dashed #f1f5f9;
+  font-size:26rpx;
+}
+.info-row:last-child{ border-bottom:none; }
+.info-lbl{ flex:0 0 180rpx;color:#64748b;font-weight:600; }
+.info-val{ flex:1;color:#0f172a;text-align:right; }
+
+.price-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:14rpx 0;border-bottom:1rpx dashed #f1f5f9;
+  font-size:26rpx;
+}
+.price-row:last-child{ border-bottom:none; }
+.price-row.total{
+  padding-top:22rpx; margin-top:6rpx; border-top:2rpx dashed #e2e8f0; border-bottom:none;
+}
+.pr-l{ color:#64748b; }
+.pr-r{ color:#0f172a;font-weight:600; }
+
+/* ================= 退款相关样式 ================= */
+.refund-card.apply   { border-left:10rpx solid #f97316; background:linear-gradient(90deg,#fff7ed 0%,#ffffff 40%); }
+.refund-card.done    { border-left:10rpx solid #10b981; background:linear-gradient(90deg,#ecfdf5 0%,#ffffff 40%); }
+.refund-card.reject  { border-left:10rpx solid #ef4444; background:linear-gradient(90deg,#fef2f2 0%,#ffffff 40%); }
+.rf-row{
+  display:flex;gap:20rpx;padding:14rpx 0;
+  font-size:26rpx;line-height:1.6;
+}
+.rf-l{ flex:0 0 180rpx;color:#64748b;font-weight:600; }
+.rf-r{ flex:1;color:#0f172a; }
+.rf-row.success-box{
+  margin-top:18rpx;padding:20rpx 24rpx;background:#ecfdf5;border-radius:14rpx;
+  color:#065f46;text-align:center;
+  border:2rpx dashed #6ee7b7;
+}
+
+.refund-apply-card{ border:2rpx solid #fecaca; background:linear-gradient(180deg,#fff5f5 0%,#ffffff 30%); }
+.rf-tip{
+  padding:16rpx 20rpx;border-radius:12rpx;margin-bottom:24rpx;
+  font-size:24rpx;line-height:1.6;
+}
+.rf-tip.auto{ background:#ecfdf5;color:#065f46;border:2rpx dashed #a7f3d0; }
+.rf-tip     { background:#fef3c7;color:#92400e;border:2rpx dashed #fcd34d; }
+.rf-sel-title, .rf-remark-title{
+  font-size:26rpx;font-weight:700;color:#0f172a;margin:10rpx 0 16rpx;
+}
+.rf-reasons{
+  display:flex;flex-wrap:wrap;gap:16rpx;margin-bottom:24rpx;
+}
+.rf-reason{
+  padding:14rpx 26rpx;border-radius:14rpx;
+  background:#fff;border:3rpx solid #e2e8f0;color:#334155;
+  font-size:26rpx;
+}
+.rf-reason.on{
+  background:#eef2ff;border-color:#6366f1;color:#4338ca;font-weight:700;
+}
+.rf-textarea{
+  width:100%;box-sizing:border-box;
+  padding:20rpx;background:#fff;border-radius:14rpx;
+  border:2rpx solid #e2e8f0;
+  font-size:26rpx;color:#0f172a;line-height:1.6;min-height:180rpx;
+}
+.rf-btn{
+  margin-top:30rpx;width:100%;height:90rpx;line-height:90rpx;
+  border-radius:50rpx;font-size:30rpx;font-weight:700;
+  background:linear-gradient(135deg,#ef4444,#dc2626);
+  color:#fff;border:none;
+  box-shadow:0 12rpx 26rpx rgba(239,68,68,0.3);
+}
+.rf-btn::after{ border:none; }
+.btn-danger{
+  background:#fee2e2; color:#b91c1c; border:2rpx solid #fecaca;
+}
+.btn-danger::after{ border:none; }

@@ -1,0 +1,24 @@
+<view class="page">
+  <view class="bind-card">
+    <view class="icon">🔗</view>
+    <view class="title">绑定设备</view>
+    <view class="desc">请输入设备令牌（device_token）进行绑定。设备令牌由管理员在后台新增设备时生成。</view>
+
+    <view class="input-row">
+      <input class="inp" placeholder="请输入 device_token" value="{{token}}" bindinput="onInput" />
+      <view class="scan-btn" bindtap="onScan">📷</view>
+    </view>
+
+    <view class="tips">
+      <view class="tip-title">💡 如何获取设备令牌？</view>
+      <view class="tip-item">1. 管理员在后台「设备管理」新增设备</view>
+      <view class="tip-item">2. 保存后会生成一串 device_token</view>
+      <view class="tip-item">3. 将该 token 填入上方输入框</view>
+      <view class="tip-item">4. 点击「绑定」即可完成</view>
+    </view>
+
+    <button class="btn-submit" bindtap="onSubmit" disabled="{{submitting}}">
+      {{submitting ? '绑定中...' : '确认绑定'}}
+    </button>
+  </view>
+</view>

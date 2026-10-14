@@ -1,0 +1,116 @@
+<!-- 设备详情 -->
+<view class="page" wx:if="{{device}}">
+  <!-- 设备头部卡片 -->
+  <view class="dev-header">
+    <view class="dh-top">
+      <view class="dh-name">{{device.name}}</view>
+      <view class="dh-status {{device.online?'on':'off'}}">
+        <view class="dot {{device.online?'on':'off'}}"></view>{{device.online?'在线':'离线'}}
+      </view>
+    </view>
+    <view class="dh-no">编号：{{device.no}} · {{device.sensor}}</view>
+
+    <!-- 实时温湿度大数字 -->
+    <view class="rt-data">
+      <view class="rt-item temp">
+        <view class="rt-ic">🌡️</view>
+        <view class="rt-val">{{device.temp===null?'--':device.temp}}</view>
+        <view class="rt-unit">℃</view>
+        <view class="rt-range">范围 {{device.tempMin}}~{{device.tempMax}}℃</view>
+      </view>
+      <view class="rt-divider"></view>
+      <view class="rt-item humi">
+        <view class="rt-ic">💧</view>
+        <view class="rt-val">{{device.humidity===null?'--':device.humidity}}</view>
+        <view class="rt-unit">%</view>
+        <view class="rt-range">范围 {{device.humMin}}~{{device.humMax}}%</view>
+      </view>
+    </view>
+
+    <view class="dh-bottom">
+      <text>🔔 报警：{{device.alarmEnabled?'开启':'关闭'}}</text>
+      <text>⏱️ 上报间隔：{{device.reportInterval}}s</text>
+      <text>最后上报：{{device.lastTime}}</text>
+    </view>
+  </view>
+
+  <!-- 统计卡片 -->
+  <view class="stats" wx:if="{{stats}}">
+    <view class="stat-item">
+      <view class="si-val" style="color:#ef4444;">{{stats.avg_temp_24h===null?'--':stats.avg_temp_24h}}℃</view>
+      <view class="si-lbl">24h均温</view>
+    </view>
+    <view class="stat-item">
+      <view class="si-val" style="color:#3b82f6;">{{stats.avg_humidity_24h===null?'--':stats.avg_humidity_24h}}%</view>
+      <view class="si-lbl">24h均湿</view>
+    </view>
+    <view class="stat-item">
+      <view class="si-val" style="color:#f59e0b;">{{stats.today_alarm_count}}</view>
+      <view class="si-lbl">今日报警</view>
+    </view>
+    <view class="stat-item">
+      <view class="si-val" style="color:#ef4444;">{{stats.pending_alarm_count}}</view>
+      <view class="si-lbl">待处理</view>
+    </view>
+  </view>
+
+  <!-- Tab 切换 -->
+  <view class="tabs">
+    <view class="tab {{activeTab==='realtime'?'active':''}}" data-tab="realtime" bindtap="switchTab">📈 实时曲线</view>
+    <view class="tab {{activeTab==='alarm'?'active':''}}" data-tab="alarm" bindtap="switchTab">🔔 报警记录</view>
+  </view>
+
+  <!-- 实时曲线 -->
+  <view class="tab-content" wx:if="{{activeTab==='realtime'}}">
+    <view class="panel">
+      <view class="panel-title">最近 60 条数据</view>
+      <view class="legend">
+        <view class="leg"><view class="leg-dot" style="background:#ef4444;"></view>温度</view>
+        <view class="leg"><view class="leg-dot" style="background:#3b82f6;"></view>湿度</view>
+        <view class="leg"><view class="leg-dot" style="background:#ef4444;border-radius:50%;"></view>报警点</view>
+      </view>
+      <canvas canvas-id="tempHumiChart" style="width:{{chartCanvasW}}px;height:{{chartCanvasH}}px;"></canvas>
+      <view class="chart-tip" wx:if="{{sensorData.length<2}}">暂无足够数据绘制图表，请等待设备上报</view>
+    </view>
+
+    <view class="panel" wx:if="{{sensorData.length>0}}">
+      <view class="panel-title">最新数据</view>
+      <view class="rt-list">
+        <view class="rt-row" wx:for="{{sensorData}}" wx:for-index="idx" wx:for-item="row" wx:key="time" wx:if="{{idx>=sensorData.length-10}}">
+          <view class="rt-r-time">{{row.time}}</view>
+          <view class="rt-r-temp" style="color:#ef4444;">{{row.temp}}℃</view>
+          <view class="rt-r-humi" style="color:#3b82f6;">{{row.humidity}}%</view>
+          <view class="rt-r-alarm" wx:if="{{row.alarm}}" style="color:#ef4444;">🔔</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 报警记录 -->
+  <view class="tab-content" wx:if="{{activeTab==='alarm'}}">
+    <view class="panel">
+      <view class="panel-title">报警记录（最近 {{alarms.length}} 条）</view>
+      <view class="empty" wx:if="{{alarms.length===0}}">
+        <view class="empty-ic">✅</view>
+        <view class="empty-txt">暂无报警记录</view>
+      </view>
+      <view class="alarm-list">
+        <view class="alarm-item {{item.handled?'done':''}}" wx:for="{{alarms}}" wx:key="id">
+          <view class="al-head">
+            <view class="al-reason">{{item.reason}}</view>
+            <view class="al-tag {{item.handled?'tag-done':'tag-pending'}}">{{item.handled?'已处理':'待处理'}}</view>
+          </view>
+          <view class="al-data">
+            🌡️ {{item.temp===null?'--':item.temp}}℃ · 💧 {{item.humidity===null?'--':item.humidity}}%
+          </view>
+          <view class="al-time">⏰ {{item.startTime}} · 持续 {{item.duration}}秒</view>
+          <view class="al-handle" wx:if="{{item.handled}}">📝 {{item.handleRemark}}（{{item.handleTime}}）</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view style="height:60rpx;"></view>
+</view>
+
+<view class="loading" wx:if="{{loading}}">加载中...</view>

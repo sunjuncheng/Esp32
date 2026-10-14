@@ -1,0 +1,38 @@
+<view class="page">
+  <view wx:if="{{!loading && empty}}" class="empty-wrap">
+    <view class="empty-icon">📍</view>
+    <view class="empty-title">还没有收货地址</view>
+    <view class="empty-desc">添加一个，方便下次快速下单</view>
+    <button class="btn btn-primary empty-btn" bindtap="goAdd">➕ 新增收货地址</button>
+  </view>
+
+  <block wx:elif="{{list.length>0}}">
+    <view class="addr-list">
+      <view class="addr-card {{item.is_default?'default':''}}" wx:for="{{list}}" wx:key="id" bindtap="onTapAddr" data-id="{{item.id}}">
+        <view class="addr-row1">
+          <text class="name">{{item.name}}</text>
+          <text class="phone">{{item.phone}}</text>
+          <view wx:if="{{item.is_default}}" class="def-tag">默认</view>
+        </view>
+        <view class="addr-text">{{item.regionText}} {{item.detail}}</view>
+        <view class="addr-row2">
+          <view class="op">
+            <view class="op-item {{item.is_default?'on':''}}" catchtap="onSetDefault" data-id="{{item.id}}">
+              <view class="rbox {{item.is_default?'on':''}}"></view>
+              <text class="op-txt">{{item.is_default?'默认地址':'设为默认'}}</text>
+            </view>
+          </view>
+          <view class="op-right">
+            <view class="op-btn" catchtap="goEdit" data-id="{{item.id}}">✏️ 编辑</view>
+            <view class="op-btn del" catchtap="onDel" data-id="{{item.id}}">🗑️ 删除</view>
+          </view>
+        </view>
+      </view>
+    </view>
+    <view style="height:180rpx;"></view>
+  </block>
+
+  <view class="fab-wrap">
+    <button class="btn btn-primary fab" bindtap="goAdd">＋ 新增地址</button>
+  </view>
+</view>

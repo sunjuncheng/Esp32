@@ -1,0 +1,70 @@
+<view class="hero">
+  <view class="hero-top">
+    <view style="flex:1;">
+      <h1>🛍️ 欢迎{{welcomeSuffix}}！</h1>
+      <p>精选好物 · 余额支付 · 极速发货</p>
+    </view>
+    <view class="avatar-box" bindtap="onAvatarTap">
+      <block wx:if="{{user}}">
+        <view class="avatar">{{ userAvatarChar }}</view>
+      </block>
+      <block wx:else>
+        <view class="login-btn">登录</view>
+      </block>
+    </view>
+  </view>
+  <view class="search-box">
+    <text class="s-ic">🔍</text>
+    <input placeholder="搜索你想要的商品..." value="{{kw}}" bindinput="onKw" bindconfirm="doSearch"/>
+    <view class="s-btn" bindtap="doSearch">搜索</view>
+  </view>
+</view>
+
+<view class="container" style="margin-top:-40rpx;">
+  <!-- 公告 -->
+  <view class="notice">
+    <text class="notice-ic">📢</text>
+    <text class="notice-txt">{{notice}}</text>
+  </view>
+
+  <!-- 分类 tab -->
+  <scroll-view scroll-x class="cat-bar" wx:if="{{categories.length>1}}">
+    <view class="cat-wrap">
+      <view wx:for="{{categories}}" wx:key="name"
+            class="cat {{item.active?'on':''}}"
+            data-n="{{item.name}}" bindtap="chooseCat">
+        {{item.name}} <text class="cat-c">{{item.c}}</text>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 商品列表 -->
+  <view wx:if="{{!loading && goodsList.length===0}}" class="empty">
+    <text class="empty-emoji">🛒</text>
+    <view class="empty-txt">暂时没有找到相关商品</view>
+  </view>
+
+  <view class="goods-grid">
+    <view wx:for="{{goodsList}}" wx:key="id"
+          class="goods-item" data-id="{{item.id}}" bindtap="goDetail">
+      <view class="goods-img">
+        <image wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFill"></image>
+        <text wx:else style="font-size:90rpx;">{{item.emoji||'📦'}}</text>
+        <view wx:if="{{item.is_hot==1}}" class="hot">🔥 HOT</view>
+      </view>
+      <view class="goods-info">
+        <view class="g-name">{{item.goods_name}}</view>
+        <view class="g-desc">{{item._desc}}</view>
+        <view class="g-bottom">
+          <view class="g-price">
+            <text class="price price-md">{{item._priceText}}</text>
+            <text wx:if="{{item.origin_price>item.price}}" class="origin-price">¥ {{item._originPriceText}}</text>
+          </view>
+          <view class="g-stock {{item.stock<=10?'low':''}}">
+            {{item._stockText}}
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

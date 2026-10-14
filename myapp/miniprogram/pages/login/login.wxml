@@ -1,0 +1,65 @@
+<view class="login-wrap">
+  <view class="login-hero">
+    <view class="logo">🛍️<text>Zaslon 商城</text></view>
+    <view class="sub">欢迎来到 Zaslon · 精选好货 · 余额支付 · 极速发货</view>
+  </view>
+
+  <view class="login-card">
+    <view class="tabs">
+      <view class="tab {{tab===0?'on':''}}" data-i="0" bindtap="switchTab">登录</view>
+      <view class="tab {{tab===1?'on':''}}" data-i="1" bindtap="switchTab">注册</view>
+    </view>
+
+    <!-- 登录 -->
+    <block wx:if="{{tab===0}}">
+      <view class="field">
+        <view class="ic">📱</view>
+        <input type="number" maxlength="11" placeholder="请输入手机号" value="{{loginPhone}}" data-k="loginPhone" bindinput="input"/>
+      </view>
+      <view class="field">
+        <view class="ic">🔐</view>
+        <input password="{{!showPwd}}" placeholder="请输入密码" value="{{loginPwd}}" data-k="loginPwd" bindinput="input"/>
+        <view class="eye" bindtap="togglePwd">{{showPwd?'🙈':'👁️'}}</view>
+      </view>
+
+      <view class="tips c-gray">
+        💡 初始密码默认：<text class="c-primary" selectable>123456</text>
+      </view>
+
+      <button class="btn btn-primary btn-block big" bindtap="doLogin" loading="{{submitting}}">立即登录</button>
+    </block>
+
+    <!-- 注册 -->
+    <block wx:if="{{tab===1}}">
+      <view class="field">
+        <view class="ic">👤</view>
+        <input placeholder="真实姓名/昵称" value="{{regName}}" data-k="regName" bindinput="input"/>
+      </view>
+      <view class="field">
+        <view class="ic">📱</view>
+        <input type="number" maxlength="11" placeholder="手机号" value="{{regPhone}}" data-k="regPhone" bindinput="input"/>
+      </view>
+      <view class="field">
+        <view class="ic">📍</view>
+        <input placeholder="默认收货地址（可选）" value="{{regAddr}}" data-k="regAddr" bindinput="input"/>
+      </view>
+      <view class="field">
+        <view class="ic">🔐</view>
+        <input password="{{!showPwd}}" placeholder="设置登录密码（≥4位）" value="{{regPwd}}" data-k="regPwd" bindinput="input"/>
+        <view class="eye" bindtap="togglePwd">{{showPwd?'🙈':'👁️'}}</view>
+      </view>
+      <view class="field">
+        <view class="ic">✅</view>
+        <input password="{{!showPwd}}" placeholder="再次输入密码" value="{{regPwd2}}" data-k="regPwd2" bindinput="input"/>
+      </view>
+      <view class="tips c-gray">
+        💡 注册成功后，使用手机号 + 密码 <text class="c-primary">123456</text> 登录（建议首次登录后在后台修改密码）
+      </view>
+      <button class="btn btn-green btn-block big" bindtap="doReg" loading="{{submitting}}">立即注册</button>
+    </block>
+  </view>
+
+  <view class="footer c-gray">
+    © Zaslon VPN · 商城小程序
+  </view>
+</view>
