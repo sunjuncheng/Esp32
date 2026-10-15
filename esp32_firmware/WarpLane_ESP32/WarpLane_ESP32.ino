@@ -9,18 +9,13 @@
  *    6. 心跳保活
  * ============================================================ */
 
-// ============ TFT_eSPI 配置（无需修改库文件，直接在这里配置）============
+// ============ 先包含配置文件（引脚等定义在 config.h）============
+#include "config.h"
+
+// ============ TFT_eSPI 配置 ============
 #define USER_SETUP_LOADED
 #define ST7789_DRIVER
-#define TFT_WIDTH   240
-#define TFT_HEIGHT  320
 #define TFT_MISO    -1
-#define TFT_MOSI    TFT_MOSI_PIN
-#define TFT_SCLK    TFT_SCK_PIN
-#define TFT_CS      TFT_CS_PIN
-#define TFT_DC      TFT_DC_PIN
-#define TFT_RST     TFT_RST_PIN
-#define TFT_BL      TFT_BL_PIN
 #define TFT_BACKLIGHT_ON HIGH
 #define SPI_FREQUENCY  40000000
 #define SPI_READ_FREQUENCY 20000000
@@ -44,7 +39,6 @@ typedef fs::FS FS;
 #include <WebServer.h>
 #include <DNSServer.h>
 #include <Preferences.h>
-#include "config.h"
 
 // ============ 全局对象 ============
 DHT dht(DHT_PIN, DHT_TYPE);

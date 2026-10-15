@@ -29,7 +29,7 @@
 // ============ 引脚定义 ============
 
 // TFT 彩色显示屏 (ST7789 SPI, 240x320)
-#define TFT_SCK         18       // SCL - SPI 时钟
+#define TFT_SCLK        18       // SCL - SPI 时钟
 #define TFT_MOSI        23       // SDA - SPI 数据 (MOSI)
 #define TFT_CS          5        // CS - 片选
 #define TFT_DC          16       // DC - 数据/命令
@@ -41,7 +41,7 @@
 
 // DHT 温湿度传感器
 #define DHT_PIN         14       // DHT 数据引脚
-#define DHT_TYPE        DHT22    // DHT11 或 DHT22
+#define DHT_TYPE        22       // 传感器型号: 11=DHT11, 22=DHT22/AM2302
 
 // 蜂鸣器（无源，低电平触发）
 #define BUZZER_PIN      3        // 蜂鸣器引脚
