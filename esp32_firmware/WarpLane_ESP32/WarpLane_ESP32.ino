@@ -128,7 +128,7 @@ void drawFace(int cx, int cy, int r, int type, int frame) {
     tft.fillCircle(cx - eyeDx, eyeY, eyeR, TFT_BLACK);
     tft.fillCircle(cx + eyeDx, eyeY, eyeR, TFT_BLACK);
     // 微笑弧线
-    tft.drawArc(cx, cy + r / 8, r / 3, r / 4, 200, 340, TFT_BLACK);
+    tft.drawArc(cx, cy + r / 8, r / 3, r / 4, 200, 340, TFT_BLACK, TFT_YELLOW);
   } else if (type == 2) {
     // 哭脸：X 眼睛
     int x1 = cx - eyeDx, x2 = cx + eyeDx;
@@ -138,7 +138,7 @@ void drawFace(int cx, int cy, int r, int type, int frame) {
     tft.drawLine(x2 - s, eyeY - s, x2 + s, eyeY + s, TFT_BLACK);
     tft.drawLine(x2 + s, eyeY - s, x2 - s, eyeY + s, TFT_BLACK);
     // 倒过来的嘴（哭）
-    tft.drawArc(cx, cy + r / 2, r / 3, r / 4, 20, 160, TFT_BLACK);
+    tft.drawArc(cx, cy + r / 2, r / 3, r / 4, 20, 160, TFT_BLACK, 0xFD20);
   } else if (type == 3) {
     // 眨眼：左眼正常，右眼眨
     if (frame % 20 < 10) {
@@ -149,7 +149,7 @@ void drawFace(int cx, int cy, int r, int type, int frame) {
       tft.drawLine(cx + eyeDx - eyeR, eyeY, cx + eyeDx + eyeR, eyeY, TFT_BLACK);
     }
     // 微笑
-    tft.drawArc(cx, cy + r / 8, r / 3, r / 4, 200, 340, TFT_BLACK);
+    tft.drawArc(cx, cy + r / 8, r / 3, r / 4, 200, 340, TFT_BLACK, TFT_YELLOW);
   }
 }
 
