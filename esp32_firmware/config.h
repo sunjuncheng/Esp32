@@ -7,14 +7,20 @@
 #define __CONFIG_H__
 
 // ============ WiFi 配置 ============
+// 默认 WiFi（首次烧录时使用，配网后会被手机端输入的覆盖）
 #define WIFI_SSID       "你的WiFi名称"
 #define WIFI_PASSWORD   "你的WiFi密码"
+
+// ============ 配网热点配置 ============
+// 当 ESP32 连不上 WiFi 时，会自动开启这个热点供手机连接配网
+#define AP_SSID         "WarpLane-IoT"     // 热点名称（可自定义）
+#define AP_PASSWORD     "12345678"      // 热点密码（至少8位，可自定义）
 
 // ============ 服务器配置 ============
 // 后台 API 地址（不带末尾斜杠）
 #define API_BASE        "http://123.56.72.218"
 // API 路径
-#define API_PATH        "/api/api.php"
+#define API_PATH        "/api.php"
 
 // ============ 设备令牌 ============
 // 从后台「设备管理」新增设备后复制的 device_token

@@ -7,8 +7,14 @@
 #define __CONFIG_H__
 
 // ============ WiFi 配置 ============
+// 默认 WiFi（首次烧录时使用，配网后会被手机端输入的覆盖）
 #define WIFI_SSID       "jiahewanshixing"
 #define WIFI_PASSWORD   "15153217149"
+
+// ============ 配网热点配置 ============
+// 当 ESP32 连不上 WiFi 时，会自动开启这个热点供手机连接配网
+#define AP_SSID         "WarpLane-IoT"     // 热点名称（可自定义）
+#define AP_PASSWORD     "12345678"      // 热点密码（至少8位，可自定义）
 
 // ============ 服务器配置 ============
 // 后台 API 地址（不带末尾斜杠）
@@ -40,6 +46,9 @@
 // 蜂鸣器（无源，低电平触发）
 #define BUZZER_PIN      3        // 蜂鸣器引脚
 #define BUZZER_ACTIVE   LOW      // 触发电平：低电平响
+
+// 板载 LED（ESP32 Dev Module 一般是 GPIO 2，用于指示 WiFi 状态）
+#define LED_PIN         2        // LED 引脚
 
 // ============ 运行参数（会被后台配置覆盖，这里是默认值）============
 #define DEFAULT_REPORT_INTERVAL   10   // 默认上报间隔（秒）

@@ -37,13 +37,25 @@
 #include <HTTPClient.h>
 #include <DHT.h>
 #include <SPI.h>
+#include <FS.h>
+typedef fs::FS FS;
 #include <TFT_eSPI.h>
 #include <ArduinoJson.h>
+#include <WebServer.h>
+#include <DNSServer.h>
+#include <Preferences.h>
 #include "config.h"
 
 // ============ 全局对象 ============
 DHT dht(DHT_PIN, DHT_TYPE);
 TFT_eSPI tft = TFT_eSPI();
+WebServer server(80);
+DNSServer dnsServer;
+Preferences preferences;
+
+// ============ WiFi 凭证（优先用 NVS 保存的，没有则用 config.h 默认值）============
+String wifiSSID = WIFI_SSID;
+String wifiPassword = WIFI_PASSWORD;
 
 // ============ 运行时状态 ============
 float currentTemp = 0;
@@ -204,9 +216,37 @@ void drawScreen() {
   animFrame++;
 }
 
+// ============ WiFi 凭证持久化（NVS）============
+void loadWiFiCredentials() {
+  preferences.begin("wifipref", true);
+  String ssid = preferences.getString("ssid", "");
+  String pass = preferences.getString("pass", "");
+  preferences.end();
+  if (ssid.length() > 0) {
+    wifiSSID = ssid;
+    wifiPassword = pass;
+    Serial.printf("[WiFi] 从 NVS 读取到已保存的 WiFi: %s\n", wifiSSID.c_str());
+  }
+}
+
+void saveWiFiCredentials(String ssid, String pass) {
+  preferences.begin("wifipref", false);
+  preferences.putString("ssid", ssid);
+  preferences.putString("pass", pass);
+  preferences.end();
+  Serial.printf("[WiFi] 已保存 WiFi 凭证到 NVS: %s\n", ssid.c_str());
+}
+
+void clearWiFiCredentials() {
+  preferences.begin("wifipref", false);
+  preferences.clear();
+  preferences.end();
+  Serial.println("[WiFi] 已清除 NVS 中的 WiFi 凭证");
+}
+
 // ============ WiFi 连接 ============
-void connectWiFi() {
-  Serial.printf("\n[WiFi] 连接 %s ...\n", WIFI_SSID);
+bool connectWiFi() {
+  Serial.printf("\n[WiFi] 连接 %s ...\n", wifiSSID.c_str());
 
   // 屏幕显示"连接中"
   tft.fillScreen(TFT_BLACK);
@@ -214,12 +254,13 @@ void connectWiFi() {
   tft.setTextDatum(MC_DATUM);
   tft.drawString("Connecting WiFi", TFT_WIDTH / 2, TFT_HEIGHT / 2 - 30, 2);
   tft.setTextColor(TFT_CYAN);
-  tft.drawString(WIFI_SSID, TFT_WIDTH / 2, TFT_HEIGHT / 2, 2);
+  tft.drawString(wifiSSID, TFT_WIDTH / 2, TFT_HEIGHT / 2, 2);
 
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(wifiSSID.c_str(), wifiPassword.c_str());
   int tries = 0;
   int dot = 0;
-  while (WiFi.status() != WL_CONNECTED && tries < 40) {
+  while (WiFi.status() != WL_CONNECTED && tries < 30) {
     delay(500);
     Serial.print(".");
 
@@ -249,18 +290,150 @@ void connectWiFi() {
     tft.setTextColor(TFT_WHITE);
     tft.drawString(WiFi.localIP().toString(), TFT_WIDTH / 2, TFT_HEIGHT / 2 + 15, 2);
     delay(1200);
+    return true;
   } else {
-    Serial.println("\n[WiFi] 连接失败，将重试...");
+    Serial.println("\n[WiFi] 连接失败");
     digitalWrite(LED_PIN, LOW); // LED 熄灭 = 未连接
+    WiFi.disconnect();
+    return false;
+  }
+}
 
-    // 屏幕显示"连接失败"
-    tft.fillScreen(TFT_BLACK);
-    tft.setTextColor(TFT_RED);
-    tft.setTextDatum(MC_DATUM);
-    tft.drawString("WiFi Failed", TFT_WIDTH / 2, TFT_HEIGHT / 2 - 20, 4);
-    tft.setTextColor(TFT_WHITE);
-    tft.drawString("Retrying...", TFT_WIDTH / 2, TFT_HEIGHT / 2 + 25, 2);
-    delay(1500);
+// ============ 配网门户（AP 模式）============
+const char* configPageHTML = R"HTML(
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WarpLane IoT 配网</title>
+<style>
+body{font-family:-apple-system,sans-serif;background:#1a1a2e;color:#eee;margin:0;padding:20px}
+.card{max-width:400px;margin:40px auto;background:#16213e;padding:24px;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+h1{color:#0f3460;margin:0 0 8px;font-size:22px}
+.sub{color:#e94560;font-size:13px;margin-bottom:20px}
+label{display:block;margin:14px 0 6px;font-size:14px;color:#a0a0c0}
+input{width:100%;box-sizing:border-box;padding:12px;border:1px solid #333;background:#0f3460;color:#fff;border-radius:8px;font-size:15px}
+input:focus{outline:none;border-color:#e94560}
+button{width:100%;padding:14px;margin-top:20px;background:#e94560;color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer}
+button:active{background:#c73650}
+.info{background:#0f3460;padding:12px;border-radius:8px;font-size:12px;color:#a0a0c0;margin-top:16px;line-height:1.6}
+.hotspot{color:#e94560;font-weight:600}
+</style></head><body>
+<div class="card">
+<h1>🌡️ WarpLane IoT</h1>
+<div class="sub">设备 WiFi 配网</div>
+<form action="/save" method="POST">
+<label>WiFi 名称 (SSID)</label>
+<input type="text" name="ssid" required placeholder="输入 WiFi 名称">
+<label>WiFi 密码</label>
+<input type="password" name="password" placeholder="输入 WiFi 密码（无密码留空）">
+<button type="submit">保存并连接</button>
+</form>
+<div class="info">
+连接步骤：<br>
+1. 输入家里/办公室的 WiFi 名称和密码<br>
+2. 点击「保存并连接」<br>
+3. 设备会自动重启并连接新 WiFi<br><br>
+当前热点：<span class="hotspot">%APSSID%</span>
+</div>
+</div></body></html>
+)HTML";
+
+const char* saveSuccessHTML = R"HTML(
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>配网成功</title>
+<style>
+body{font-family:-apple-system,sans-serif;background:#1a1a2e;color:#eee;margin:0;padding:20px}
+.card{max-width:400px;margin:60px auto;background:#16213e;padding:32px;border-radius:16px;text-align:center}
+.icon{font-size:60px}
+h1{color:#4ecca3;margin:16px 0 8px}
+p{color:#a0a0c0;line-height:1.6}
+.ssid{color:#e94560;font-weight:600}
+</style></head><body>
+<div class="card">
+<div class="icon">✅</div>
+<h1>配网成功！</h1>
+<p>WiFi 信息已保存<br>设备正在重启并连接 <span class="ssid">%SSID%</span></p>
+<p style="font-size:12px;margin-top:24px">2 秒后设备自动重启...</p>
+</div></body></html>
+)HTML";
+
+void handleRoot() {
+  String html = String(configPageHTML);
+  html.replace("%APSSID%", AP_SSID);
+  server.send(200, "text/html; charset=utf-8", html);
+}
+
+void handleSave() {
+  String ssid = server.arg("ssid");
+  String pass = server.arg("password");
+  ssid.trim();
+  if (ssid.length() == 0) {
+    server.send(400, "text/plain", "SSID 不能为空");
+    return;
+  }
+  saveWiFiCredentials(ssid, pass);
+
+  String html = String(saveSuccessHTML);
+  html.replace("%SSID%", ssid);
+  server.send(200, "text/html; charset=utf-8", html);
+  Serial.printf("[Portal] 收到 WiFi 配置: %s\n", ssid.c_str());
+
+  // 2 秒后重启
+  delay(2000);
+  ESP.restart();
+}
+
+void startConfigPortal() {
+  Serial.println("\n[Portal] 启动配网门户...");
+
+  // 屏幕显示配网提示
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextColor(TFT_CYAN);
+  tft.setTextDatum(MC_DATUM);
+  tft.drawString("WiFi Config", TFT_WIDTH / 2, TFT_HEIGHT / 2 - 60, 2);
+  tft.setTextColor(TFT_WHITE);
+  tft.drawString("Connect to AP:", TFT_WIDTH / 2, TFT_HEIGHT / 2 - 25, 2);
+  tft.setTextColor(TFT_YELLOW);
+  tft.drawString(AP_SSID, TFT_WIDTH / 2, TFT_HEIGHT / 2 + 5, 2);
+  tft.setTextColor(TFT_WHITE);
+  tft.drawString("Open 192.168.4.1", TFT_WIDTH / 2, TFT_HEIGHT / 2 + 40, 2);
+
+  // 切换到 AP 模式
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP(AP_SSID, AP_PASSWORD);
+  IPAddress apIP = WiFi.softAPIP();
+  Serial.printf("[Portal] 热点已开启: %s  IP: %s\n", AP_SSID, apIP.toString().c_str());
+
+  // DNS 服务器：把所有域名解析到 ESP32（实现强制门户）
+  dnsServer.start(53, "*", apIP);
+
+  // Web 服务器路由
+  server.on("/", handleRoot);
+  server.on("/save", HTTP_POST, handleSave);
+  server.onNotFound([]() {
+    // 所有未匹配的请求都返回配网页面
+    String html = String(configPageHTML);
+    html.replace("%APSSID%", AP_SSID);
+    server.send(200, "text/html; charset=utf-8", html);
+  });
+  server.begin();
+  Serial.println("[Portal] Web 服务器已启动，等待手机连接...");
+
+  // 循环处理请求（阻塞，直到配网成功后重启）
+  while (true) {
+    dnsServer.processNextRequest();
+    server.handleClient();
+
+    // LED 慢闪提示配网模式
+    static unsigned long lastBlink = 0;
+    if (millis() - lastBlink > 500) {
+      digitalWrite(LED_PIN, !digitalRead(LED_PIN));
+      lastBlink = millis();
+    }
   }
 }
 
@@ -339,8 +512,19 @@ void reportData() {
 
 // ============ 心跳 ============
 void sendHeartbeat() {
+  Serial.println("[Heartbeat] 发送心跳...");
   String url = String(API_BASE) + API_PATH + "?action=heartbeat";
-  httpPost(url, "device_token=" + String(DEVICE_TOKEN));
+  String resp = httpPost(url, "device_token=" + String(DEVICE_TOKEN));
+  if (resp.length() == 0) { Serial.println("[Heartbeat] 请求失败"); return; }
+
+  DynamicJsonDocument doc(256);
+  if (deserializeJson(doc, resp)) { Serial.println("[Heartbeat] JSON 解析失败"); return; }
+
+  if (doc["code"] != 200) {
+    Serial.printf("[Heartbeat] 错误: %s\n", doc["msg"].as<String>().c_str());
+    return;
+  }
+  Serial.println("[Heartbeat] OK");
 }
 
 // ============ 读取传感器 ============
@@ -389,8 +573,41 @@ void setup() {
   dht.begin();
   Serial.println("[Sensor] DHT 已初始化");
 
-  // WiFi
-  connectWiFi();
+  // 加载已保存的 WiFi 凭证
+  loadWiFiCredentials();
+
+  // BOOT 键检测（GPIO 0）：上电后给 3 秒窗口期，期间按 BOOT 进入配网模式
+  // 注意：不能在通电瞬间按 BOOT，那会进入下载模式；要等启动后再按
+  pinMode(0, INPUT_PULLUP);
+  Serial.println("[Portal] 3秒内按 BOOT 键可进入配网模式...");
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextColor(TFT_WHITE);
+  tft.setTextDatum(MC_DATUM);
+  tft.drawString("WarpLane IoT", TFT_WIDTH / 2, TFT_HEIGHT / 2 - 40, 4);
+  tft.setTextColor(TFT_CYAN);
+  tft.drawString("Press BOOT for", TFT_WIDTH / 2, TFT_HEIGHT / 2 + 10, 2);
+  tft.drawString("WiFi Config", TFT_WIDTH / 2, TFT_HEIGHT / 2 + 35, 2);
+
+  bool forceConfig = false;
+  for (int i = 0; i < 30; i++) {
+    if (digitalRead(0) == LOW) {
+      forceConfig = true;
+      break;
+    }
+    delay(100);
+  }
+
+  if (forceConfig) {
+    Serial.println("[Portal] 检测到 BOOT 键按下，进入配网模式");
+    clearWiFiCredentials();
+    startConfigPortal();
+  }
+
+  // WiFi 连接，失败则进入配网门户
+  if (!connectWiFi()) {
+    Serial.println("[Portal] WiFi 连接失败，进入配网门户");
+    startConfigPortal();
+  }
 
   // 启动提示音
   beep(80); delay(50); beep(80);
@@ -407,6 +624,27 @@ void setup() {
 // ============ loop ============
 void loop() {
   unsigned long now = millis();
+
+  // 0. BOOT 键长按检测：长按 3 秒进入配网模式（随时可换网）
+  static unsigned long bootPressedTime = 0;
+  static bool bootHandled = false;
+  if (digitalRead(0) == LOW) {
+    if (bootPressedTime == 0) {
+      bootPressedTime = now;
+      bootHandled = false;
+    }
+    if (!bootHandled && now - bootPressedTime >= 3000) {
+      bootHandled = true;
+      Serial.println("\n[Portal] 长按 BOOT 3 秒，进入配网模式...");
+      beep(100);
+      clearWiFiCredentials();
+      startConfigPortal();
+      return;
+    }
+  } else {
+    bootPressedTime = 0;
+    bootHandled = false;
+  }
 
   // 1. 读取传感器（每 2 秒）
   static unsigned long lastRead = 0;
