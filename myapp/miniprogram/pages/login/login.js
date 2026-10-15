@@ -60,13 +60,16 @@ Page({
       try {
         const list = await api.listAllUsers();
         const user = (list.data || []).find(u => u.phone === loginPhone.trim());
-        if (!user) throw new Error('该手机号未注册（兜底模式）');
+        if (!user) throw new Error('该手机号未注册');
         // 兜底：密码都是 123456
         if (loginPwd !== '123456') throw new Error('密码错误（兜底默认：123456）');
         app.setLoginState(user, 'fallback_'+user.id);
         wx.showToast({ title: '登录成功（兼容模式）', icon: 'success' });
         setTimeout(()=>wx.switchTab({ url:'/pages/index/index' }),500);
-      } catch(e2){}
+      } catch(e2) {
+        const errMsg = (e2 && e2.message) ? e2.message : '登录失败，请检查网络';
+        wx.showToast({ title: errMsg, icon: 'none', duration: 2500 });
+      }
     } finally {
       this.setData({ submitting: false });
     }

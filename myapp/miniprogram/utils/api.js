@@ -2,9 +2,8 @@
 const app = () => getApp();
 
 // ========== 后端接口路径配置 ==========
-// 如果 api.php 放在 网站根目录/api/ 子目录（你现在的结构），下面这个不用改
-// 如果以后改成根目录，改成 '/api.php'
-const API_PATH = '/api/api.php';
+// api.php 放在网站根目录
+const API_PATH = '/api.php';
 // ======================================
 
 function getBase() {

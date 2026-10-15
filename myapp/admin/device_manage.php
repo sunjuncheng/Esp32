@@ -45,6 +45,7 @@ if($action==='add' && $_POST){
 elseif($action==='edit' && $_POST){
     $id = intval($_POST['id'] ?? 0);
     $name = trim($_POST['device_name'] ?? '');
+    $uid = intval($_POST['user_id'] ?? 0);
     $sensor = trim($_POST['sensor_type'] ?? 'DHT11');
     $tmin = floatval($_POST['temp_min'] ?? -40);
     $tmax = floatval($_POST['temp_max'] ?? 85);
@@ -60,6 +61,7 @@ elseif($action==='edit' && $_POST){
     else{
         $sql = "UPDATE iot_device SET
           device_name='".mysqli_real_escape_string($conn,$name)."',
+          user_id=$uid,
           sensor_type='".mysqli_real_escape_string($conn,$sensor)."',
           temp_min=$tmin,temp_max=$tmax,humidity_min=$hmin,humidity_max=$hmax,
           alarm_enabled=$alarmEn,alarm_duration=$alarmDur,report_interval=$repInt,
@@ -323,7 +325,7 @@ tbody tr:hover{background:#f8fafc;}
         </div>
     </div>
     <script>
-    fetch('../api/api.php?action=getSensorData&device_id=<?php echo $cid;?>&limit=500')
+    fetch('../api.php?action=getSensorData&device_id=<?php echo $cid;?>&limit=500')
         .then(r=>r.json()).then(res=>{
             if(res.code!==200 || !res.data) return;
             const data = res.data;

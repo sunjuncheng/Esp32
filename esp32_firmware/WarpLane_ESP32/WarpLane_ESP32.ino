@@ -98,6 +98,61 @@ void stopAlarm() {
   Serial.println("[ALARM] 停止报警");
 }
 
+// ============ 表情绘制函数 ============
+// type: 0=思考(连接中), 1=笑脸, 2=哭脸(错误), 3=眨眼(配网)
+void drawFace(int cx, int cy, int r, int type, int frame) {
+  // 脸
+  uint16_t faceColor = TFT_YELLOW;
+  if (type == 2) faceColor = 0xFD20; // 橙色(哭脸)
+  tft.fillCircle(cx, cy, r, faceColor);
+  tft.drawCircle(cx, cy, r, TFT_BLACK);
+
+  // 眼睛
+  int eyeY = cy - r / 4;
+  int eyeR = r / 5;
+  int eyeDx = r / 3;
+
+  if (type == 0) {
+    // 思考：眼睛转圈
+    float angle = frame * 0.3;
+    int ex1 = cx - eyeDx + (int)(cos(angle) * eyeR * 0.5);
+    int ey1 = eyeY + (int)(sin(angle) * eyeR * 0.5);
+    int ex2 = cx + eyeDx + (int)(cos(angle + 3.14) * eyeR * 0.5);
+    int ey2 = eyeY + (int)(sin(angle + 3.14) * eyeR * 0.5);
+    tft.fillCircle(ex1, ey1, eyeR, TFT_BLACK);
+    tft.fillCircle(ex2, ey2, eyeR, TFT_BLACK);
+    // 嘴：一条直线（严肃）
+    tft.drawLine(cx - r / 3, cy + r / 3, cx + r / 3, cy + r / 3, TFT_BLACK);
+  } else if (type == 1) {
+    // 笑脸
+    tft.fillCircle(cx - eyeDx, eyeY, eyeR, TFT_BLACK);
+    tft.fillCircle(cx + eyeDx, eyeY, eyeR, TFT_BLACK);
+    // 微笑弧线
+    tft.drawArc(cx, cy + r / 8, r / 3, r / 4, 200, 340, TFT_BLACK);
+  } else if (type == 2) {
+    // 哭脸：X 眼睛
+    int x1 = cx - eyeDx, x2 = cx + eyeDx;
+    int s = eyeR;
+    tft.drawLine(x1 - s, eyeY - s, x1 + s, eyeY + s, TFT_BLACK);
+    tft.drawLine(x1 + s, eyeY - s, x1 - s, eyeY + s, TFT_BLACK);
+    tft.drawLine(x2 - s, eyeY - s, x2 + s, eyeY + s, TFT_BLACK);
+    tft.drawLine(x2 + s, eyeY - s, x2 - s, eyeY + s, TFT_BLACK);
+    // 倒过来的嘴（哭）
+    tft.drawArc(cx, cy + r / 2, r / 3, r / 4, 20, 160, TFT_BLACK);
+  } else if (type == 3) {
+    // 眨眼：左眼正常，右眼眨
+    if (frame % 20 < 10) {
+      tft.fillCircle(cx - eyeDx, eyeY, eyeR, TFT_BLACK);
+      tft.fillCircle(cx + eyeDx, eyeY, eyeR, TFT_BLACK);
+    } else {
+      tft.fillCircle(cx - eyeDx, eyeY, eyeR, TFT_BLACK);
+      tft.drawLine(cx + eyeDx - eyeR, eyeY, cx + eyeDx + eyeR, eyeY, TFT_BLACK);
+    }
+    // 微笑
+    tft.drawArc(cx, cy + r / 8, r / 3, r / 4, 200, 340, TFT_BLACK);
+  }
+}
+
 // ============ 绘制彩色界面 ============
 void drawScreen() {
   // 报警时整屏闪烁红色背景
@@ -125,9 +180,17 @@ void drawScreen() {
   }
 
   if (!sensorOK) {
+    // 传感器错误：哭脸动画
+    static int errFrame = 0;
     tft.setTextColor(TFT_RED);
     tft.setTextDatum(MC_DATUM);
-    tft.drawString("Sensor Error!", TFT_WIDTH/2, TFT_HEIGHT/2, 4);
+    tft.drawString("Sensor Error!", TFT_WIDTH / 2, 50, 2);
+    drawFace(TFT_WIDTH / 2, TFT_HEIGHT / 2 - 10, 50, 2, errFrame);
+    // 抖动效果
+    int shakeX = (errFrame % 2 == 0) ? 0 : 2;
+    tft.setTextColor(TFT_ORANGE);
+    tft.drawString("Check wiring!", TFT_WIDTH / 2 + shakeX, TFT_HEIGHT / 2 + 60, 2);
+    errFrame++;
     return;
   }
 
@@ -248,18 +311,10 @@ void clearWiFiCredentials() {
 bool connectWiFi() {
   Serial.printf("\n[WiFi] 连接 %s ...\n", wifiSSID.c_str());
 
-  // 屏幕显示"连接中"
-  tft.fillScreen(TFT_BLACK);
-  tft.setTextColor(TFT_WHITE);
-  tft.setTextDatum(MC_DATUM);
-  tft.drawString("Connecting WiFi", TFT_WIDTH / 2, TFT_HEIGHT / 2 - 30, 2);
-  tft.setTextColor(TFT_CYAN);
-  tft.drawString(wifiSSID, TFT_WIDTH / 2, TFT_HEIGHT / 2, 2);
-
   WiFi.mode(WIFI_STA);
   WiFi.begin(wifiSSID.c_str(), wifiPassword.c_str());
   int tries = 0;
-  int dot = 0;
+  int frame = 0;
   while (WiFi.status() != WL_CONNECTED && tries < 30) {
     delay(500);
     Serial.print(".");
@@ -267,14 +322,22 @@ bool connectWiFi() {
     // LED 快闪（连接中）
     digitalWrite(LED_PIN, !digitalRead(LED_PIN));
 
-    // 屏幕上显示点动画（最多 4 个点循环）
-    String dots = "";
-    for (int i = 0; i < dot % 4; i++) dots += ".";
-    tft.fillRect(TFT_WIDTH / 2 - 50, TFT_HEIGHT / 2 + 30, 100, 25, TFT_BLACK);
-    tft.setTextColor(TFT_CYAN);
+    // 屏幕：思考表情 + 连接中文字
+    tft.fillScreen(TFT_BLACK);
+    drawFace(TFT_WIDTH / 2, TFT_HEIGHT / 2 - 30, 50, 0, frame); // 思考表情
+    tft.setTextColor(TFT_WHITE);
     tft.setTextDatum(MC_DATUM);
-    tft.drawString(dots, TFT_WIDTH / 2, TFT_HEIGHT / 2 + 42, 4);
-    dot++;
+    tft.drawString("Connecting WiFi", TFT_WIDTH / 2, TFT_HEIGHT / 2 + 40, 2);
+    tft.setTextColor(TFT_CYAN);
+    tft.drawString(wifiSSID, TFT_WIDTH / 2, TFT_HEIGHT / 2 + 65, 2);
+
+    // 点动画
+    String dots = "";
+    for (int i = 0; i < frame % 4; i++) dots += ".";
+    tft.setTextColor(TFT_CYAN);
+    tft.drawString(dots, TFT_WIDTH / 2, TFT_HEIGHT / 2 + 90, 4);
+
+    frame++;
     tries++;
   }
 
@@ -282,18 +345,32 @@ bool connectWiFi() {
     Serial.printf("\n[WiFi] 已连接, IP: %s\n", WiFi.localIP().toString().c_str());
     digitalWrite(LED_PIN, HIGH); // LED 常亮 = 已连接
 
-    // 屏幕显示"已连接" + IP
-    tft.fillScreen(TFT_BLACK);
-    tft.setTextColor(TFT_GREEN);
-    tft.setTextDatum(MC_DATUM);
-    tft.drawString("WiFi Connected", TFT_WIDTH / 2, TFT_HEIGHT / 2 - 20, 2);
-    tft.setTextColor(TFT_WHITE);
-    tft.drawString(WiFi.localIP().toString(), TFT_WIDTH / 2, TFT_HEIGHT / 2 + 15, 2);
-    delay(1200);
+    // 屏幕：笑脸 + 已连接
+    for (int i = 0; i < 12; i++) {
+      tft.fillScreen(TFT_BLACK);
+      drawFace(TFT_WIDTH / 2, TFT_HEIGHT / 2 - 30, 50, 1, i); // 笑脸
+      tft.setTextColor(TFT_GREEN);
+      tft.setTextDatum(MC_DATUM);
+      tft.drawString("WiFi Connected", TFT_WIDTH / 2, TFT_HEIGHT / 2 + 40, 2);
+      tft.setTextColor(TFT_WHITE);
+      tft.drawString(WiFi.localIP().toString(), TFT_WIDTH / 2, TFT_HEIGHT / 2 + 65, 2);
+      delay(100);
+    }
     return true;
   } else {
     Serial.println("\n[WiFi] 连接失败");
     digitalWrite(LED_PIN, LOW); // LED 熄灭 = 未连接
+
+    // 屏幕：哭脸 + 连接失败
+    tft.fillScreen(TFT_BLACK);
+    drawFace(TFT_WIDTH / 2, TFT_HEIGHT / 2 - 30, 50, 2, 0); // 哭脸
+    tft.setTextColor(TFT_RED);
+    tft.setTextDatum(MC_DATUM);
+    tft.drawString("WiFi Failed", TFT_WIDTH / 2, TFT_HEIGHT / 2 + 40, 2);
+    tft.setTextColor(TFT_WHITE);
+    tft.drawString("Retrying...", TFT_WIDTH / 2, TFT_HEIGHT / 2 + 65, 2);
+    delay(1500);
+
     WiFi.disconnect();
     return false;
   }
@@ -390,18 +467,6 @@ void handleSave() {
 void startConfigPortal() {
   Serial.println("\n[Portal] 启动配网门户...");
 
-  // 屏幕显示配网提示
-  tft.fillScreen(TFT_BLACK);
-  tft.setTextColor(TFT_CYAN);
-  tft.setTextDatum(MC_DATUM);
-  tft.drawString("WiFi Config", TFT_WIDTH / 2, TFT_HEIGHT / 2 - 60, 2);
-  tft.setTextColor(TFT_WHITE);
-  tft.drawString("Connect to AP:", TFT_WIDTH / 2, TFT_HEIGHT / 2 - 25, 2);
-  tft.setTextColor(TFT_YELLOW);
-  tft.drawString(AP_SSID, TFT_WIDTH / 2, TFT_HEIGHT / 2 + 5, 2);
-  tft.setTextColor(TFT_WHITE);
-  tft.drawString("Open 192.168.4.1", TFT_WIDTH / 2, TFT_HEIGHT / 2 + 40, 2);
-
   // 切换到 AP 模式
   WiFi.mode(WIFI_AP);
   WiFi.softAP(AP_SSID, AP_PASSWORD);
@@ -424,6 +489,7 @@ void startConfigPortal() {
   Serial.println("[Portal] Web 服务器已启动，等待手机连接...");
 
   // 循环处理请求（阻塞，直到配网成功后重启）
+  int portalFrame = 0;
   while (true) {
     dnsServer.processNextRequest();
     server.handleClient();
@@ -434,6 +500,22 @@ void startConfigPortal() {
       digitalWrite(LED_PIN, !digitalRead(LED_PIN));
       lastBlink = millis();
     }
+
+    // 屏幕：眨眼笑脸 + 配网信息（每 10 帧刷新一次，避免闪烁）
+    if (portalFrame % 10 == 0) {
+      tft.fillScreen(TFT_BLACK);
+      drawFace(TFT_WIDTH / 2, 70, 45, 3, portalFrame); // 眨眼笑脸
+      tft.setTextColor(TFT_CYAN);
+      tft.setTextDatum(MC_DATUM);
+      tft.drawString("WiFi Config", TFT_WIDTH / 2, 130, 2);
+      tft.setTextColor(TFT_WHITE);
+      tft.drawString("Connect to AP:", TFT_WIDTH / 2, 160, 2);
+      tft.setTextColor(TFT_YELLOW);
+      tft.drawString(AP_SSID, TFT_WIDTH / 2, 190, 2);
+      tft.setTextColor(TFT_WHITE);
+      tft.drawString("Open 192.168.4.1", TFT_WIDTH / 2, 220, 2);
+    }
+    portalFrame++;
   }
 }
 
