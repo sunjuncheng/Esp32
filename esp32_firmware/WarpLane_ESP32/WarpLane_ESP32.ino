@@ -207,17 +207,60 @@ void drawScreen() {
 // ============ WiFi 连接 ============
 void connectWiFi() {
   Serial.printf("\n[WiFi] 连接 %s ...\n", WIFI_SSID);
+
+  // 屏幕显示"连接中"
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextColor(TFT_WHITE);
+  tft.setTextDatum(MC_DATUM);
+  tft.drawString("Connecting WiFi", TFT_WIDTH / 2, TFT_HEIGHT / 2 - 30, 2);
+  tft.setTextColor(TFT_CYAN);
+  tft.drawString(WIFI_SSID, TFT_WIDTH / 2, TFT_HEIGHT / 2, 2);
+
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   int tries = 0;
+  int dot = 0;
   while (WiFi.status() != WL_CONNECTED && tries < 40) {
     delay(500);
     Serial.print(".");
+
+    // LED 快闪（连接中）
+    digitalWrite(LED_PIN, !digitalRead(LED_PIN));
+
+    // 屏幕上显示点动画（最多 4 个点循环）
+    String dots = "";
+    for (int i = 0; i < dot % 4; i++) dots += ".";
+    tft.fillRect(TFT_WIDTH / 2 - 50, TFT_HEIGHT / 2 + 30, 100, 25, TFT_BLACK);
+    tft.setTextColor(TFT_CYAN);
+    tft.setTextDatum(MC_DATUM);
+    tft.drawString(dots, TFT_WIDTH / 2, TFT_HEIGHT / 2 + 42, 4);
+    dot++;
     tries++;
   }
+
   if (WiFi.status() == WL_CONNECTED) {
     Serial.printf("\n[WiFi] 已连接, IP: %s\n", WiFi.localIP().toString().c_str());
+    digitalWrite(LED_PIN, HIGH); // LED 常亮 = 已连接
+
+    // 屏幕显示"已连接" + IP
+    tft.fillScreen(TFT_BLACK);
+    tft.setTextColor(TFT_GREEN);
+    tft.setTextDatum(MC_DATUM);
+    tft.drawString("WiFi Connected", TFT_WIDTH / 2, TFT_HEIGHT / 2 - 20, 2);
+    tft.setTextColor(TFT_WHITE);
+    tft.drawString(WiFi.localIP().toString(), TFT_WIDTH / 2, TFT_HEIGHT / 2 + 15, 2);
+    delay(1200);
   } else {
     Serial.println("\n[WiFi] 连接失败，将重试...");
+    digitalWrite(LED_PIN, LOW); // LED 熄灭 = 未连接
+
+    // 屏幕显示"连接失败"
+    tft.fillScreen(TFT_BLACK);
+    tft.setTextColor(TFT_RED);
+    tft.setTextDatum(MC_DATUM);
+    tft.drawString("WiFi Failed", TFT_WIDTH / 2, TFT_HEIGHT / 2 - 20, 4);
+    tft.setTextColor(TFT_WHITE);
+    tft.drawString("Retrying...", TFT_WIDTH / 2, TFT_HEIGHT / 2 + 25, 2);
+    delay(1500);
   }
 }
 
@@ -330,6 +373,8 @@ void setup() {
   digitalWrite(BUZZER_PIN, !BUZZER_ACTIVE); // 默认关闭（低电平触发）
   pinMode(TFT_BL, OUTPUT);
   digitalWrite(TFT_BL, HIGH); // 开启背光
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, LOW); // LED 默认灭，WiFi 连上后常亮
 
   // TFT 初始化
   tft.init();

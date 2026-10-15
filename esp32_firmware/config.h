@@ -41,6 +41,11 @@
 #define BUZZER_PIN      3        // 蜂鸣器引脚
 #define BUZZER_ACTIVE   LOW      // 触发电平：低电平响
 
+// 板载 LED（ESP32 Dev Module 一般是 GPIO 2，用于指示 WiFi 状态：
+//   连接中 = 快闪，连接成功 = 常亮，连接失败 = 熄灭）
+// 注意：部分板子板载 LED 接 5V 不受 GPIO 控制，此时可忽略此功能
+#define LED_PIN         2
+
 // ============ 运行参数（会被后台配置覆盖，这里是默认值）============
 #define DEFAULT_REPORT_INTERVAL   10   // 默认上报间隔（秒）
 #define DEFAULT_ALARM_DURATION    30    // 默认蜂鸣器持续时间（秒）

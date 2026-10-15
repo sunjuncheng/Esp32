@@ -7,18 +7,18 @@
 #define __CONFIG_H__
 
 // ============ WiFi 配置 ============
-#define WIFI_SSID       "你的WiFi名称"
-#define WIFI_PASSWORD   "你的WiFi密码"
+#define WIFI_SSID       "jiahewanshixing"
+#define WIFI_PASSWORD   "15153217149"
 
 // ============ 服务器配置 ============
 // 后台 API 地址（不带末尾斜杠）
 #define API_BASE        "http://123.56.72.218"
 // API 路径
-#define API_PATH        "/api/api.php"
+#define API_PATH        "/api.php"
 
 // ============ 设备令牌 ============
 // 从后台「设备管理」新增设备后复制的 device_token
-#define DEVICE_TOKEN    "在这里粘贴你的device_token"
+#define DEVICE_TOKEN    "2f4ea4d2034cde7037f2086bae75b3eb"
 
 // ============ 引脚定义 ============
 
